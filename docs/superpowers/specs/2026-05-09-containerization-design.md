@@ -76,15 +76,18 @@ Only Nginx ports 80/443 are exposed. All app ports are internal only.
 
 **Nginx routing rules:**
 
-| Path pattern | Upstream |
-|---|---|
-| `/` (all unmatched) | `frontend:3000` |
-| `/api/auth/*` | `nodejs:5000` |
-| `/api/sensors/*` | `fastapi:8000` |
-| `/api/recommend/*` | `fastapi:8000` |
-| `/api/analytics/*` | `fastapi:8000` |
-| `/api/weather/*` | `fastapi:8000` |
-| `/health` | `fastapi:8000` |
+NodeJS and FastAPI both use the `/api/` prefix, so Nginx routes by exact path rather than prefix:
+
+| Path pattern | Upstream | Notes |
+|---|---|---|
+| `/api/userOnboarding` | `nodejs:5000` | Exact NodeJS route |
+| `/api/settingCookies` | `nodejs:5000` | Exact NodeJS route |
+| `/api/sensors/*` | `fastapi:8000` | |
+| `/api/recommend/*` | `fastapi:8000` | |
+| `/api/analytics/*` | `fastapi:8000` | |
+| `/api/weather/*` | `fastapi:8000` | |
+| `/health` | `fastapi:8000` | |
+| `/` (all unmatched) | `frontend:3000` | Next.js SSR + static assets |
 
 ---
 
