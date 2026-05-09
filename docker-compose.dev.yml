@@ -1,0 +1,32 @@
+# Dev overrides — merge with: docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+
+services:
+
+  fastapi:
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    ports:
+      - "8000:8000"
+    volumes:
+      # bind-mount source for hot reload (venv lives at /venv, not /app, so no conflict)
+      - ./backend/app:/app/app
+      - ./backend/ml/models:/app/ml/models
+      # saved_models from host (inherited from base — no change needed)
+
+  nodejs:
+    command: ["node_modules/.bin/nodemon", "index.js"]
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./NodeJSbackend:/app
+      - /app/node_modules     # anonymous volume: preserves Linux node_modules from image
+
+  frontend:
+    build:
+      target: deps            # only install deps stage — skip next build
+    command: ["npm", "run", "dev"]
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules     # anonymous volume: preserves Linux node_modules from image
+      - /app/.next            # anonymous volume: preserves Next.js build cache
