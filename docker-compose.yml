@@ -1,0 +1,95 @@
+networks:
+  agrisense-net:
+    driver: bridge
+
+volumes:
+  mosquitto_data:
+  mosquitto_log:
+
+services:
+
+  # ── MQTT Broker ────────────────────────────────────────────
+  mosquitto:
+    image: eclipse-mosquitto:2
+    networks: [agrisense-net]
+    restart: unless-stopped
+    ports:
+      - "1883:1883"          # always exposed — ESP32 hardware on LAN needs this
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    healthcheck:
+      test: ["CMD", "mosquitto_pub", "-h", "localhost", "-p", "1883",
+             "-t", "health/check", "-m", "ping", "-q"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ── Python FastAPI (ML + sensors + weather) ────────────────
+  fastapi:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    networks: [agrisense-net]
+    restart: unless-stopped
+    env_file: ./backend/.env
+    environment:
+      MQTT_BROKER_HOST: mosquitto       # override localhost → service name
+    volumes:
+      - ./backend/ml/saved_models:/app/ml/saved_models  # host bind-mount
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s      # ML model loading takes ~30-60s on first start
+
+  # ── NodeJS Express (auth + user management) ────────────────
+  nodejs:
+    build:
+      context: ./NodeJSbackend
+      dockerfile: Dockerfile
+    networks: [agrisense-net]
+    restart: unless-stopped
+    env_file: ./NodeJSbackend/.env
+    environment:
+      MLSERVER_URL: http://fastapi:8000   # override localhost → service name
+      FRONTEND_URL: http://frontend:3000  # override localhost → service name
+    depends_on:
+      fastapi:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e",
+             "const h=require('http');h.get('http://localhost:5000/',r=>{process.exit(r.statusCode<500?0:1)}).on('error',_=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ── Next.js Frontend ───────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: runner                      # prod: standalone build
+    networks: [agrisense-net]
+    restart: unless-stopped
+    env_file: ./frontend/.env.local
+    environment:
+      BACKEND: http://nodejs:5000         # server-side SSR calls
+    depends_on:
+      nodejs:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e",
+             "const h=require('http');h.get('http://localhost:3000/',r=>{process.exit(r.statusCode<500?0:1)}).on('error',_=>process.exit(1))"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 30s
