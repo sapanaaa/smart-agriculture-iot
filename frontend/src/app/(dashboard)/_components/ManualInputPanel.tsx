@@ -81,7 +81,7 @@ export default function ManualInputPanel({ lang, onChange }: Props) {
   };
 
   const handleChange = (key: keyof ManualInput, val: string | number) => {
-    const updated = { ...form, [key]: val, ...(key === "soil_moisture" ? { moisture: val } : {}) };
+    const updated = { ...form, [key]: val, ...(key === "soil_moisture" ? { moisture: val } : {}) } as ManualInput;
     setForm(updated);
     setActivePreset(null);
     onChange(updated);
