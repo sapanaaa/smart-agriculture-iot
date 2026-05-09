@@ -21,7 +21,7 @@ services:
       - mosquitto_log:/mosquitto/log
     healthcheck:
       test: ["CMD", "mosquitto_pub", "-h", "localhost", "-p", "1883",
-             "-t", "health/check", "-m", "ping", "-q"]
+             "-t", "health/check", "-m", "ping", "-q", "0"]
       interval: 30s
       timeout: 10s
       retries: 3

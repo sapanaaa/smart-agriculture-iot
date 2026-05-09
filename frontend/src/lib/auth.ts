@@ -1,6 +1,6 @@
 import NextAuth, { DefaultSession } from "next-auth"
 import { MongoDBAdapter } from "@auth/mongodb-adapter"
-import client from "./mongodb-client"
+import clientPromise from "./mongodb-client"
 import Nodemailer from "next-auth/providers/nodemailer"
 
 
@@ -16,7 +16,7 @@ declare module "next-auth"{
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: MongoDBAdapter(client),
+  adapter: MongoDBAdapter(clientPromise),
   providers: [
    Nodemailer({
       server: {

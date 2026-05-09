@@ -2,6 +2,12 @@
 FROM python:3.13-slim AS builder
 
 WORKDIR /build
+
+# System deps needed to build pycairo (required by reportlab / xhtml2pdf)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc g++ pkg-config libcairo2-dev meson \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN python -m venv /venv
 ENV PATH="/venv/bin:$PATH"
 RUN pip install --no-cache-dir --upgrade pip
@@ -17,6 +23,11 @@ RUN pip install --no-cache-dir -r requirements.txt \
 
 # ── Stage 2: minimal runtime image ────────────────────────────
 FROM python:3.13-slim AS runtime
+
+# Runtime shared library for pycairo / reportlab
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libcairo2 \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /venv /venv
 ENV PATH="/venv/bin:$PATH"
