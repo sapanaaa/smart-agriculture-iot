@@ -1,0 +1,10 @@
+# Copy this file to terraform.tfvars and fill in your values
+# terraform.tfvars is gitignored and will not be committed
+
+aws_region      = "us-east-1"
+aws_account_id  = "123456789012"  # Replace with your AWS account ID
+admin_ip        = "203.0.113.10/32"  # Your public IP address (find at: https://whatismyipaddress.com)
+esp32_subnet    = "192.168.1.0/24"  # Your local network CIDR (or 0.0.0.0/0 for testing)
+
+# NOTE: EC2 key pair is auto-created from your local SSH key (~/.ssh/id_rsa.pub)
+# If you don't have an SSH key, generate one with: ssh-keygen -t rsa -b 4096

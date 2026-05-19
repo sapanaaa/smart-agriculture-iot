@@ -41,7 +41,15 @@ COPY app/ app/
 # Copy ML model architecture files (not saved_models — that's a volume)
 COPY ml/models/ ml/models/
 
+# Create directory for ML models (will be mounted from host)
+RUN mkdir -p ml/saved_models
+
+# Add startup entrypoint script
+COPY docker-entrypoint.sh /app/
+RUN chmod +x /app/docker-entrypoint.sh
+
 EXPOSE 8000
 
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 # 2 workers default; override via UVICORN_WORKERS env var in prod
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers ${UVICORN_WORKERS:-2}"]

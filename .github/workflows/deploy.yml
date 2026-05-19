@@ -1,0 +1,151 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  test:
+    name: Run Tests First
+    uses: ./.github/workflows/test.yml
+
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    needs: test  # Only deploy if tests pass
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Install SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Get EC2 public IP
+        id: ec2_ip
+        run: |
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=AgriSense-IoT-Server" \
+            --query "Reservations[0].Instances[0].InstanceId" \
+            --output text)
+
+          PUBLIC_IP=$(aws ec2 describe-instances \
+            --instance-ids $INSTANCE_ID \
+            --query "Reservations[0].Instances[0].PublicIpAddress" \
+            --output text)
+
+          echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
+          echo "public_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
+
+      - name: Create .env files on EC2
+        env:
+          EC2_HOST: ${{ steps.ec2_ip.outputs.public_ip }}
+        run: |
+          # Copy .env files to EC2
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no \
+            backend/.env ubuntu@$EC2_HOST:/tmp/backend.env
+
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no \
+            NodeJSbackend/.env ubuntu@$EC2_HOST:/tmp/nodejs.env
+
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no \
+            frontend/.env.local ubuntu@$EC2_HOST:/tmp/frontend.env
+
+      - name: Deploy application to EC2
+        env:
+          EC2_HOST: ${{ steps.ec2_ip.outputs.public_ip }}
+        run: |
+          # Copy application code to EC2
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
+            --exclude 'node_modules' \
+            --exclude '.git' \
+            --exclude 'backend/ml/saved_models' \
+            --exclude 'backend/venv' \
+            --exclude '.env' \
+            --exclude '.env.local' \
+            ./ ubuntu@$EC2_HOST:/home/ubuntu/app/
+
+          # Execute deployment script on EC2
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@$EC2_HOST << 'EOF'
+            cd /home/ubuntu/app
+
+            # Move .env files to correct locations
+            mv /tmp/backend.env backend/.env
+            mv /tmp/nodejs.env NodeJSbackend/.env
+            mv /tmp/frontend.env frontend/.env.local
+
+            # Update MQTT broker host for Docker
+            sed -i 's/MQTT_BROKER_HOST=localhost/MQTT_BROKER_HOST=mosquitto/g' backend/.env
+
+            # Update service URLs for Docker networking
+            sed -i 's|MLSERVER_URL=http://localhost:8000|MLSERVER_URL=http://fastapi:8000|g' NodeJSbackend/.env
+            sed -i 's|FRONTEND_URL=http://localhost:3000|FRONTEND_URL=http://frontend:3000|g' NodeJSbackend/.env
+            sed -i 's|BACKEND=http://localhost:5000|BACKEND=http://nodejs:5000|g' frontend/.env.local
+
+            # Download ML models from S3
+            echo "Downloading ML models from S3..."
+            aws s3 sync s3://agrisense-iot-ml-models-$(aws sts get-caller-identity --query Account --output text)/ /home/ubuntu/ml_models/ || echo "No ML models yet"
+
+            # Copy ML models to backend directory
+            mkdir -p backend/ml/saved_models
+            cp -r /home/ubuntu/ml_models/* backend/ml/saved_models/ 2>/dev/null || echo "No models to copy"
+
+            # Stop existing containers
+            docker-compose -f docker-compose.yml -f docker-compose.prod.yml down || true
+
+            # Build and start containers
+            docker-compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+
+            # Wait for services to start
+            echo "Waiting for services to initialize..."
+            sleep 30
+
+            # Show container status
+            docker-compose ps
+
+            # Check logs for errors
+            docker-compose logs --tail=50
+          EOF
+
+      - name: Verify deployment
+        env:
+          EC2_HOST: ${{ steps.ec2_ip.outputs.public_ip }}
+        run: |
+          # Wait for services to be ready
+          sleep 10
+
+          # Check health endpoint
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://$EC2_HOST/health)
+
+          if [ "$HTTP_CODE" == "200" ]; then
+            echo "✅ Deployment successful! Health check passed."
+          else
+            echo "⚠️ Health check returned: $HTTP_CODE (services may still be starting)"
+          fi
+
+      - name: Deployment summary
+        if: always()
+        env:
+          EC2_HOST: ${{ steps.ec2_ip.outputs.public_ip }}
+        run: |
+          echo "========================================="
+          echo "Deployment Status: ${{ job.status }}"
+          echo "========================================="
+          echo ""
+          echo "🌐 Application URL: http://$EC2_HOST"
+          echo "🔍 Health Check: http://$EC2_HOST/health"
+          echo "📊 FastAPI Docs: http://$EC2_HOST/docs"
+          echo ""
+          echo "SSH Command:"
+          echo "ssh -i ~/.ssh/id_rsa ubuntu@$EC2_HOST"

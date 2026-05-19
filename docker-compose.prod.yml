@@ -3,8 +3,13 @@
 services:
 
   fastapi:
+    volumes:
+      # Bind-mount ML models from EC2 host directory (downloaded from S3)
+      - ./backend/ml/saved_models:/app/ml/saved_models:ro
     environment:
       UVICORN_WORKERS: "4"   # increase workers for production load
+      ML_MODELS_DIR: /app/ml/saved_models
+      PYTHONUNBUFFERED: 1
 
   nginx:
     image: nginx:alpine

@@ -162,6 +162,9 @@ docker-compose.override.yml
 htmlcov/
 .pytest_cache/
 .tox/
+coverage/
+*.lcov
+coverage.xml
 
 # Documentation builds
 site/
@@ -171,3 +174,29 @@ site/
 *.bak
 *.backup
 *.orig
+
+# ── Terraform / Infrastructure ────────────────────────────────
+# Terraform state files (contain sensitive data)
+infrastructure/terraform.tfstate
+infrastructure/terraform.tfstate.backup
+infrastructure/.terraform/
+infrastructure/.terraform.lock.hcl
+infrastructure/terraform.tfvars
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Crash log files
+crash.log
+crash.*.log
+
+# ── CI/CD & Deployment ────────────────────────────────────────
+# SSH keys (NEVER commit private keys)
+*.pem
+*.key
+*.ppk
+id_rsa
+id_rsa.pub
+
+# GitHub Actions artifacts
+.github/workflows/*.log

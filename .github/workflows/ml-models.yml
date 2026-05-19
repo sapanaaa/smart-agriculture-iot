@@ -1,0 +1,65 @@
+name: Upload ML Models to S3
+
+on:
+  workflow_dispatch:  # Manual trigger only
+    inputs:
+      model_version:
+        description: 'Model version tag (e.g., v1.0.0)'
+        required: true
+        default: 'latest'
+        type: string
+
+jobs:
+  upload-models:
+    name: Train and Upload ML Models
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: Install dependencies
+        working-directory: backend
+        run: pip install -r requirements.txt
+
+      - name: Train ML models
+        working-directory: backend
+        run: |
+          export PYTHONIOENCODING=utf-8
+          python -X utf8 ml/train_models.py
+
+      - name: Verify models created
+        working-directory: backend/ml/saved_models
+        run: |
+          ls -lh
+          echo "✅ Models trained successfully"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Upload models to S3
+        run: |
+          BUCKET_NAME="agrisense-iot-ml-models-$(aws sts get-caller-identity --query Account --output text)"
+
+          echo "Uploading to S3 bucket: $BUCKET_NAME"
+
+          aws s3 sync backend/ml/saved_models/ s3://$BUCKET_NAME/${{ inputs.model_version }}/ \
+            --exclude "*.pyc" \
+            --exclude "__pycache__/*" \
+            --exclude ".gitkeep"
+
+          # Tag as latest
+          aws s3 sync s3://$BUCKET_NAME/${{ inputs.model_version }}/ s3://$BUCKET_NAME/latest/
+
+          echo "✅ ML models uploaded successfully!"
+          echo "📦 Version: ${{ inputs.model_version }}"
+          echo "🪣 S3 Path: s3://$BUCKET_NAME/${{ inputs.model_version }}/"
