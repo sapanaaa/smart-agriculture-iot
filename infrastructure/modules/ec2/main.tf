@@ -41,13 +41,13 @@ resource "aws_security_group" "agrisense_sg" {
     cidr_blocks = [var.esp32_subnet]
   }
 
-  # SSH - Admin access
+  # SSH - Admin access + GitHub Actions
   ingress {
     description = "SSH"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = [var.admin_ip]
+    cidr_blocks = ["0.0.0.0/0"]  # Allow from anywhere (needed for GitHub Actions)
   }
 
   # Allow all outbound traffic
