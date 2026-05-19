@@ -16,20 +16,11 @@ data "aws_ami" "ubuntu" {
   }
 }
 
-# IAM Module - EC2 role with S3 access
+# IAM Module - Basic EC2 role (no S3)
 module "iam" {
   source = "./modules/iam"
 
-  project_name    = var.project_name
-  s3_bucket_arn   = module.s3.bucket_arn
-}
-
-# S3 Module - ML models storage
-module "s3" {
-  source = "./modules/s3"
-
-  project_name   = var.project_name
-  aws_account_id = var.aws_account_id
+  project_name = var.project_name
 }
 
 # EC2 Module - Application server
@@ -43,5 +34,4 @@ module "ec2" {
   iam_instance_profile = module.iam.instance_profile_name
   aws_region           = var.aws_region
   aws_account_id       = var.aws_account_id
-  s3_bucket_name       = module.s3.bucket_name
 }

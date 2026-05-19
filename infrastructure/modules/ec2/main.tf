@@ -80,7 +80,6 @@ resource "aws_instance" "agrisense_server" {
   user_data = templatefile("${path.module}/user_data.sh", {
     AWS_REGION     = var.aws_region
     AWS_ACCOUNT_ID = var.aws_account_id
-    S3_BUCKET      = var.s3_bucket_name
   })
 
   tags = {

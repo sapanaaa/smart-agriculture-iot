@@ -41,14 +41,12 @@ apt-get install -y git
 # Create application directories
 echo "[6/8] Creating application directories..."
 mkdir -p /home/ubuntu/app
-mkdir -p /home/ubuntu/ml_models
+mkdir -p /home/ubuntu/app/backend/ml/saved_models
 mkdir -p /home/ubuntu/.ssh
 chown -R ubuntu:ubuntu /home/ubuntu/app
-chown -R ubuntu:ubuntu /home/ubuntu/ml_models
 
-# Download ML models from S3
-echo "[7/8] Downloading ML models from S3..."
-aws s3 sync s3://${S3_BUCKET}/ /home/ubuntu/ml_models/ --region ${AWS_REGION} || echo "No ML models in S3 yet (this is OK on first run)"
+# Note: ML models will be deployed via GitHub Actions (stored on EBS)
+echo "[7/8] ML model storage ready at /home/ubuntu/app/backend/ml/saved_models/"
 
 # Set up deployment script
 echo "[8/8] Creating deployment script..."
@@ -65,13 +63,8 @@ if [ -d .git ]; then
     git pull origin main || echo "Git pull skipped (not a git repo yet)"
 fi
 
-# Download ML models from S3
-echo "Syncing ML models from S3..."
-aws s3 sync s3://${S3_BUCKET}/ /home/ubuntu/ml_models/
-
-# Copy ML models to backend
-mkdir -p backend/ml/saved_models
-cp -r /home/ubuntu/ml_models/* backend/ml/saved_models/ 2>/dev/null || echo "No ML models to copy yet"
+# ML models are deployed via GitHub Actions (stored in backend/ml/saved_models/)
+echo "ML models location: backend/ml/saved_models/"
 
 # Stop existing containers
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml down || true

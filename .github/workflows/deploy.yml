@@ -70,13 +70,13 @@ jobs:
         env:
           EC2_HOST: ${{ steps.ec2_ip.outputs.public_ip }}
         run: |
-          # Copy application code to EC2
+          # Copy application code to EC2 (including ML models)
           rsync -avz --delete \
             -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
             --exclude 'node_modules' \
             --exclude '.git' \
-            --exclude 'backend/ml/saved_models' \
             --exclude 'backend/venv' \
+            --exclude 'backend/ml/datasets' \
             --exclude '.env' \
             --exclude '.env.local' \
             ./ ubuntu@$EC2_HOST:/home/ubuntu/app/
@@ -98,13 +98,9 @@ jobs:
             sed -i 's|FRONTEND_URL=http://localhost:3000|FRONTEND_URL=http://frontend:3000|g' NodeJSbackend/.env
             sed -i 's|BACKEND=http://localhost:5000|BACKEND=http://nodejs:5000|g' frontend/.env.local
 
-            # Download ML models from S3
-            echo "Downloading ML models from S3..."
-            aws s3 sync s3://agrisense-iot-ml-models-$(aws sts get-caller-identity --query Account --output text)/ /home/ubuntu/ml_models/ || echo "No ML models yet"
-
-            # Copy ML models to backend directory
-            mkdir -p backend/ml/saved_models
-            cp -r /home/ubuntu/ml_models/* backend/ml/saved_models/ 2>/dev/null || echo "No models to copy"
+            # ML models are included in rsync deployment (stored on EBS)
+            echo "ML models location: backend/ml/saved_models/"
+            ls -lh backend/ml/saved_models/ || echo "No ML models deployed yet (train locally and include in next deployment)"
 
             # Stop existing containers
             docker-compose -f docker-compose.yml -f docker-compose.prod.yml down || true

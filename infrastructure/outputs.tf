@@ -8,11 +8,6 @@ output "ec2_instance_id" {
   value       = module.ec2.instance_id
 }
 
-output "s3_bucket_name" {
-  description = "S3 bucket name for ML models"
-  value       = module.s3.bucket_name
-}
-
 output "ssh_command" {
   description = "SSH command to connect to EC2 instance"
   value       = "ssh -i ~/.ssh/id_rsa ubuntu@${module.ec2.public_ip}"
@@ -37,7 +32,7 @@ output "deployment_info" {
 
     EC2 Instance ID: ${module.ec2.instance_id}
     Public IP: ${module.ec2.public_ip}
-    S3 Bucket: ${module.s3.bucket_name}
+    Storage: 30GB EBS volume (ML models stored on EC2)
 
     SSH Access:
       ssh -i ~/.ssh/id_rsa ubuntu@${module.ec2.public_ip}
@@ -49,9 +44,9 @@ output "deployment_info" {
       FastAPI Health: http://${module.ec2.public_ip}/health
 
     Next Steps:
-      1. Upload ML models to S3: aws s3 sync backend/ml/saved_models/ s3://${module.s3.bucket_name}/
-      2. Configure GitHub Secrets (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, EC2_SSH_KEY)
-      3. Push code to trigger deployment workflow
+      1. Train ML models locally: cd backend && python ml/train_models.py
+      2. Configure GitHub Secrets (BACKEND_ENV, NODEJS_ENV, FRONTEND_ENV, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, EC2_SSH_KEY)
+      3. Push code to trigger deployment workflow (ML models included in rsync)
 
     ========================================
   EOT
