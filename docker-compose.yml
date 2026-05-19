@@ -34,6 +34,8 @@ services:
       dockerfile: Dockerfile
     networks: [agrisense-net]
     restart: unless-stopped
+    ports:
+      - "8000:8000"          # expose to host for local dev
     env_file: ./backend/.env
     environment:
       MQTT_BROKER_HOST: mosquitto       # override localhost → service name
@@ -57,6 +59,8 @@ services:
       dockerfile: Dockerfile
     networks: [agrisense-net]
     restart: unless-stopped
+    ports:
+      - "5000:5000"          # expose to host for local dev
     env_file: ./NodeJSbackend/.env
     environment:
       MLSERVER_URL: http://fastapi:8000   # override localhost → service name
@@ -80,6 +84,8 @@ services:
       target: runner                      # prod: standalone build
     networks: [agrisense-net]
     restart: unless-stopped
+    ports:
+      - "3000:3000"          # expose to host for local dev
     env_file: ./frontend/.env.local
     environment:
       BACKEND: http://nodejs:5000         # server-side SSR calls

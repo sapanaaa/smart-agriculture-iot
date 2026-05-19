@@ -3,7 +3,7 @@ FROM node:22-alpine AS deps
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # ── Stage 2: build the Next.js application ───────────────────
 FROM node:22-alpine AS builder
