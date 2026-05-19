@@ -64,7 +64,8 @@ services:
     env_file: ./NodeJSbackend/.env
     environment:
       MLSERVER_URL: http://fastapi:8000   # override localhost → service name
-      FRONTEND_URL: http://frontend:3000  # override localhost → service name
+      # Keep localhost:3000 for browser requests from host machine
+      # FRONTEND_URL stays as defined in .env file (localhost:3000)
     depends_on:
       fastapi:
         condition: service_healthy
