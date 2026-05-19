@@ -1,27 +1,5 @@
 # EC2 Instance for AgriSense IoT application
 
-# Get default VPC
-data "aws_vpc" "default" {
-  default = true
-}
-
-# Get default subnets
-data "aws_subnets" "default" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
-  }
-}
-
-# Create Internet Gateway if it doesn't exist
-resource "aws_internet_gateway" "agrisense_igw" {
-  vpc_id = data.aws_vpc.default.id
-
-  tags = {
-    Name = "${var.project_name}-igw"
-  }
-}
-
 # Create EC2 key pair from your local public key
 resource "aws_key_pair" "agrisense" {
   key_name   = "${var.project_name}-key"
@@ -35,7 +13,6 @@ resource "aws_key_pair" "agrisense" {
 resource "aws_security_group" "agrisense_sg" {
   name        = "${var.project_name}-security-group"
   description = "Security group for AgriSense IoT server"
-  vpc_id      = data.aws_vpc.default.id
 
   # HTTP - Frontend access
   ingress {
@@ -114,8 +91,6 @@ resource "aws_instance" "agrisense_server" {
 resource "aws_eip" "agrisense_eip" {
   instance = aws_instance.agrisense_server.id
   domain   = "vpc"
-
-  depends_on = [aws_internet_gateway.agrisense_igw]
 
   tags = {
     Name = "${var.project_name}-static-ip"

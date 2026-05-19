@@ -23,7 +23,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: ap-south-1
 
       - name: Install SSH key
         run: |
@@ -50,16 +50,21 @@ jobs:
       - name: Create .env files on EC2
         env:
           EC2_HOST: ${{ steps.ec2_ip.outputs.public_ip }}
+          BACKEND_ENV: ${{ secrets.BACKEND_ENV }}
+          NODEJS_ENV: ${{ secrets.NODEJS_ENV }}
+          FRONTEND_ENV: ${{ secrets.FRONTEND_ENV }}
         run: |
-          # Copy .env files to EC2
-          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no \
-            backend/.env ubuntu@$EC2_HOST:/tmp/backend.env
+          # Create .env files from GitHub Secrets and copy to EC2
+          echo "$BACKEND_ENV" > backend.env
+          echo "$NODEJS_ENV" > nodejs.env
+          echo "$FRONTEND_ENV" > frontend.env
 
-          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no \
-            NodeJSbackend/.env ubuntu@$EC2_HOST:/tmp/nodejs.env
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no backend.env ubuntu@$EC2_HOST:/tmp/backend.env
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no nodejs.env ubuntu@$EC2_HOST:/tmp/nodejs.env
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no frontend.env ubuntu@$EC2_HOST:/tmp/frontend.env
 
-          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no \
-            frontend/.env.local ubuntu@$EC2_HOST:/tmp/frontend.env
+          # Clean up local temp files
+          rm -f backend.env nodejs.env frontend.env
 
       - name: Deploy application to EC2
         env:
