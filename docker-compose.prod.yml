@@ -4,7 +4,7 @@ services:
 
   fastapi:
     volumes:
-      # Bind-mount ML models from EC2 host directory (downloaded from S3)
+      # Bind-mount ML models from EC2 host directory
       - ./backend/ml/saved_models:/app/ml/saved_models:ro
     environment:
       UVICORN_WORKERS: "4"   # increase workers for production load
@@ -17,8 +17,10 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       frontend:
         condition: service_healthy
