@@ -275,7 +275,7 @@ export default function AIAdvisorPage() {
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement("a");
       a.href = url;
-      a.download = `AgriSense_Report_${report.report_id}.pdf`;
+      a.download = `SmartAgri_Report_${report.report_id}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (e: any) {

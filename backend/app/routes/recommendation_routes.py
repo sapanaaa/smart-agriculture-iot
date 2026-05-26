@@ -839,7 +839,7 @@ async def generate_report(request: ReportRequest):
             media_type="application/pdf",
             headers={
                 "Content-Disposition": (
-                    f'attachment; filename="AgriSense_Report_{request.report_id or "farm"}.pdf"'
+                    f'attachment; filename="SmartAgri_Report_{request.report_id or "farm"}.pdf"'
                 )
             }
         )

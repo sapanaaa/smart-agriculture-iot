@@ -88,10 +88,11 @@ jobs:
             # Update MQTT broker host for Docker
             sed -i 's/MQTT_BROKER_HOST=localhost/MQTT_BROKER_HOST=mosquitto/g' backend/.env
 
-            # Update service URLs for Docker networking
+            # Update internal service URLs for Docker networking (backend only)
             sed -i 's|MLSERVER_URL=http://localhost:8000|MLSERVER_URL=http://fastapi:8000|g' NodeJSbackend/.env
-            sed -i 's|FRONTEND_URL=http://localhost:3000|FRONTEND_URL=http://frontend:3000|g' NodeJSbackend/.env
-            sed -i 's|BACKEND=http://localhost:5000|BACKEND=http://nodejs:5000|g' frontend/.env.local
+
+            # IMPORTANT: Don't change FRONTEND_URL in NodeJSbackend (already HTTPS in secret)
+            # IMPORTANT: Don't change BACKEND in frontend (already HTTPS in secret)
 
             # ML models are included in rsync deployment (stored on EBS)
             echo "ML models location: backend/ml/saved_models/"

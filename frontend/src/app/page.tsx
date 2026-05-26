@@ -20,7 +20,7 @@ export default function Home() {
                 </svg>
               </div>
               <div>
-                <div className="text-lg font-bold text-gray-900">AgriSense</div>
+                <div className="text-lg font-bold text-gray-900">SmartAgri</div>
                 <div className="text-xs text-gray-500">Smart Agriculture IoT</div>
               </div>
             </div>
@@ -88,7 +88,7 @@ export default function Home() {
               <div className="dashboard-3d">
                 <Image
                   src="/dashboard.png"
-                  alt="AgriSense Dashboard"
+                  alt="SmartAgri Dashboard"
                   width={800}
                   height={600}
                   className="rounded-xl shadow-2xl"
@@ -240,7 +240,7 @@ export default function Home() {
         <div className="container mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              How AgriSense Works
+              How SmartAgri Works
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Three-layer architecture for reliable farm monitoring
@@ -349,7 +349,7 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                 </svg>
               </div>
-              <span className="font-semibold text-gray-900">AgriSense IoT</span>
+              <span className="font-semibold text-gray-900">SmartAgri IoT</span>
             </div>
             <p className="text-sm text-gray-600">
               Academic Project • Far Western University, Nepal
