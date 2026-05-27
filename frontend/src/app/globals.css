@@ -117,6 +117,11 @@
 }
 
 @layer base {
+  html {
+    /* Account for fixed navbar (h-20 = 5rem) when jumping to anchor links */
+    scroll-padding-top: 5rem;
+    scroll-behavior: smooth;
+  }
   * {
     @apply border-border outline-ring/50;
   }
