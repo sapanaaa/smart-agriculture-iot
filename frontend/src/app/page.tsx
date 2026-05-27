@@ -27,8 +27,17 @@ export default function Home() {
       >
         <div className="container mx-auto px-4 lg:px-8">
           <div className="flex items-center justify-between h-20">
-            <div className="flex items-center space-x-3">
-              <div className="w-11 h-11 bg-[#2E8B57] rounded-lg flex items-center justify-center shadow-lg">
+            <Link
+              href="/"
+              onClick={(e) => {
+                e.preventDefault();
+                window.history.replaceState(null, "", "/");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className="flex items-center space-x-3 group"
+              aria-label="SmartAgri home"
+            >
+              <div className="w-11 h-11 bg-[#2E8B57] rounded-lg flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
                 {/* Leaf-with-circuit logo: organic leaf shape + tech node accent */}
                 <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19.2 2.96c1.4 9.3-2.66 15.4-8.2 17.04Z" />
@@ -40,7 +49,7 @@ export default function Home() {
                 <div className={`text-xl font-extrabold tracking-tight ${scrolled ? "text-gray-900" : "text-white"}`}>SmartAgri</div>
                 <div className={`text-[11px] tracking-wide ${scrolled ? "text-gray-500" : "text-white/70"}`}>Smart Agriculture IoT</div>
               </div>
-            </div>
+            </Link>
 
             <div className="hidden md:flex items-center space-x-10">
               <a href="#features" className={`text-base font-semibold transition-colors ${scrolled ? "text-gray-700 hover:text-gray-900" : "text-white/85 hover:text-white"}`}>Features</a>
@@ -92,7 +101,7 @@ export default function Home() {
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-[1.05] mb-6">
               Monitor Your Farm
               <br />
-              <span className="text-[#3FAE6F]">in Real-Time</span> with IOT 
+              <span className="text-[#3FAE6F]">in Real-Time</span> with Us
             </h1>
 
             <p className="text-lg text-white/85 leading-relaxed mb-8 max-w-xl">
@@ -130,7 +139,7 @@ export default function Home() {
               </div>
               <div className="border-l border-white/20 pl-6">
                 <div className="text-3xl font-bold text-white">18</div>
-                <div className="text-xs text-white/70 uppercase tracking-wider mt-1">Nepal Crops</div>
+                <div className="text-xs text-white/70 uppercase tracking-wider mt-1">Crops</div>
               </div>
             </div>
           </div>
@@ -535,7 +544,7 @@ export default function Home() {
                 ))}
               </div>
               <div className="mt-auto pt-5 text-xs font-medium text-white/75 border-t border-white/25">
-                Hover any subject for the technical detail.
+                These are some subject that we studied during academics that helped us.
               </div>
             </div>
           </div>
@@ -544,12 +553,12 @@ export default function Home() {
 
       {/* ───────────────────────── Supervisors (final page) ───────────────────────── */}
       <section id="supervisors" className="min-h-screen flex flex-col bg-gray-50 px-4 lg:px-8">
-        <div className="container mx-auto max-w-6xl w-full flex-1 flex flex-col justify-center pt-24 pb-6">
-          <div className="text-center mb-5">
-            <span className="inline-block px-3 py-1 bg-[#2E8B57]/10 text-[#2E8B57] rounded text-[10px] font-bold tracking-wide uppercase mb-2 border border-[#2E8B57]/20">
+        <div className="container mx-auto max-w-6xl w-full flex-1 flex flex-col justify-center pt-24 pb-6 gap-8">
+          <div className="text-center">
+            <span className="inline-block px-3 py-1 bg-[#2E8B57]/10 text-[#2E8B57] rounded text-[10px] font-bold tracking-wide uppercase mb-3 border border-[#2E8B57]/20">
               Project Supervisors
             </span>
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1.5">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
               Under Whose Guidance This Project Was Built
             </h2>
             <p className="text-sm text-gray-600 max-w-2xl mx-auto">
@@ -557,8 +566,8 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Supervisor cards — landscape photo, compact info area */}
-          <div className="grid sm:grid-cols-2 gap-4 max-w-3xl mx-auto w-full mb-5">
+          {/* Supervisor cards — bigger gap between them, slightly wider container */}
+          <div className="grid sm:grid-cols-2 gap-10 max-w-4xl mx-auto w-full">
             {[
               {
                 name: "Er. Birendra Singh Dhami",
@@ -590,15 +599,15 @@ export default function Home() {
                   />
                 </div>
 
-                <div className="p-3.5">
+                <div className="p-4">
                   <h3 className="text-base font-bold text-gray-900 mb-0.5">{sup.name}</h3>
-                  <p className="text-xs text-[#2E8B57] font-semibold mb-1">{sup.role}</p>
+                  <p className="text-xs text-[#2E8B57] font-semibold mb-1.5">{sup.role}</p>
                   <div className="flex items-start gap-1.5 text-[11px] text-gray-500 leading-snug">
                     <svg className="w-3 h-3 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
                       <path d="M6 12v5c3 3 9 3 12 0v-5" />
                     </svg>
-                    <span>Department of Computer Engineering · Far Western University</span>
+                    <span>Department of Engineering · Far Western University</span>
                   </div>
                 </div>
               </div>
