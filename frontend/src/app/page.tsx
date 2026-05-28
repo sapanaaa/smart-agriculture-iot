@@ -15,6 +15,42 @@ export default function Home() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  /**
+   * Map between section IDs and clean URL paths.
+   * Clicking a navbar link scrolls to that section AND updates the URL bar
+   * to e.g. /supervisors. Middleware rewrites /supervisors → / so the page
+   * still serves the same landing page on refresh.
+   */
+  const sectionRoutes: Record<string, string> = {
+    features: "/features",
+    "how-it-works": "/how-it-works",
+    about: "/about",
+    supervisors: "/supervisors",
+  };
+
+  const scrollToId = (id: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    const path = sectionRoutes[id] ?? "/";
+    window.history.pushState(null, "", path);
+  };
+
+  // On first paint, if we landed at /features /supervisors etc, scroll there.
+  useEffect(() => {
+    const path = window.location.pathname;
+    const id = Object.entries(sectionRoutes).find(([, p]) => p === path)?.[0];
+    if (id) {
+      // small delay so layout is ready before scrolling
+      requestAnimationFrame(() => {
+        const el = document.getElementById(id);
+        if (el) el.scrollIntoView({ behavior: "auto", block: "start" });
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <main className="min-h-screen bg-white">
       {/* ───────────────────────── Navigation ───────────────────────── */}
@@ -52,10 +88,10 @@ export default function Home() {
             </Link>
 
             <div className="hidden md:flex items-center space-x-10">
-              <a href="#features" className={`text-base font-semibold transition-colors ${scrolled ? "text-gray-700 hover:text-gray-900" : "text-white/85 hover:text-white"}`}>Features</a>
-              <a href="#how-it-works" className={`text-base font-semibold transition-colors ${scrolled ? "text-gray-700 hover:text-gray-900" : "text-white/85 hover:text-white"}`}>How It Works</a>
-              <a href="#about" className={`text-base font-semibold transition-colors ${scrolled ? "text-gray-700 hover:text-gray-900" : "text-white/85 hover:text-white"}`}>About</a>
-              <a href="#supervisors" className={`text-base font-semibold transition-colors ${scrolled ? "text-gray-700 hover:text-gray-900" : "text-white/85 hover:text-white"}`}>Supervisors</a>
+              <a href="/features" onClick={scrollToId("features")} className={`text-base font-semibold transition-colors ${scrolled ? "text-gray-700 hover:text-gray-900" : "text-white/85 hover:text-white"}`}>Features</a>
+              <a href="/how-it-works" onClick={scrollToId("how-it-works")} className={`text-base font-semibold transition-colors ${scrolled ? "text-gray-700 hover:text-gray-900" : "text-white/85 hover:text-white"}`}>How It Works</a>
+              <a href="/about" onClick={scrollToId("about")} className={`text-base font-semibold transition-colors ${scrolled ? "text-gray-700 hover:text-gray-900" : "text-white/85 hover:text-white"}`}>About</a>
+              <a href="/supervisors" onClick={scrollToId("supervisors")} className={`text-base font-semibold transition-colors ${scrolled ? "text-gray-700 hover:text-gray-900" : "text-white/85 hover:text-white"}`}>Supervisors</a>
               <Link href="/login" className="px-7 py-2.5 bg-[#2E8B57] text-white text-base font-bold rounded-full hover:bg-[#256d44] transition-colors shadow-lg">
                 Get Started
               </Link>
@@ -120,7 +156,8 @@ export default function Home() {
                 </svg>
               </Link>
               <a
-                href="#how-it-works"
+                href="/how-it-works"
+                onClick={scrollToId("how-it-works")}
                 className="inline-flex items-center px-8 py-4 text-white border-2 border-white/40 hover:bg-white/10 rounded-full transition-all font-medium"
               >
                 Learn More
@@ -395,7 +432,7 @@ export default function Home() {
 
       {/* ───────────────────────── How It Works ───────────────────────── */}
       <section id="how-it-works" className="min-h-screen flex items-center py-16 px-4 lg:px-8 bg-gray-50">
-        <div className="container mx-auto max-w-7xl">
+        <div className="container mx-auto max-w-7xl pt-12">
           <div className="text-center mb-10">
             <span className="inline-block px-3 py-1 bg-[#2E8B57]/10 text-[#2E8B57] rounded text-xs font-bold tracking-wide uppercase mb-4 border border-[#2E8B57]/20">
               Architecture &amp; Stack
@@ -408,7 +445,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
             {[
               {
                 num: "01",
@@ -434,18 +471,18 @@ export default function Home() {
             ].map((layer) => (
               <div
                 key={layer.num}
-                className="relative bg-white rounded-2xl border border-gray-200 p-7 hover:border-[#2E8B57] hover:shadow-xl transition-all"
+                className="relative bg-white rounded-2xl border border-gray-200 p-7 lg:p-8 hover:border-[#2E8B57] hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <span className="text-5xl font-bold text-[#2E8B57]/15 leading-none">{layer.num}</span>
-                  <span className="text-[10px] font-bold text-[#2E8B57] uppercase tracking-wider bg-[#2E8B57]/10 px-2.5 py-1 rounded-full">
+                <div className="flex items-start justify-between mb-5">
+                  <span className="text-6xl lg:text-7xl font-bold text-[#2E8B57]/15 leading-none">{layer.num}</span>
+                  <span className="text-[10px] font-bold text-[#2E8B57] uppercase tracking-wider bg-[#2E8B57]/10 px-3 py-1.5 rounded-full">
                     {layer.role}
                   </span>
                 </div>
                 <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3">{layer.title}</h3>
                 <p className="text-sm md:text-base text-gray-600 leading-relaxed mb-5">{layer.desc}</p>
                 <div className="border-t border-gray-100 pt-4">
-                  <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Built with</div>
+                  <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2.5">Built with</div>
                   <div className="flex flex-wrap gap-1.5">
                     {layer.stack.map((s) => (
                       <span
@@ -595,6 +632,7 @@ export default function Home() {
                     src={sup.photo}
                     alt={sup.name}
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    style={{ objectPosition: "center 25%" }}
                     onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                   />
                 </div>
