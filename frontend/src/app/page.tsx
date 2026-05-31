@@ -51,6 +51,32 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /**
+   * Reveal-on-scroll observer.
+   * Adds .is-visible to elements with .reveal or .reveal-stagger
+   * the first time they enter the viewport. Once revealed, they
+   * stay revealed (we unobserve after firing).
+   */
+  useEffect(() => {
+    const targets = document.querySelectorAll<HTMLElement>(".reveal, .reveal-stagger");
+    if (targets.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.15, rootMargin: "0px 0px -8% 0px" }
+    );
+
+    targets.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <main className="min-h-screen bg-white">
       {/* ───────────────────────── Navigation ───────────────────────── */}
@@ -125,7 +151,7 @@ export default function Home() {
         <div className="container mx-auto relative z-10 pt-24 pb-20">
           <div className="max-w-2xl">
             {/* small category label */}
-            <div className="flex items-center gap-2 mb-6">
+            <div className="hero-fade-up flex items-center gap-2 mb-6" style={{ animationDelay: "0.2s" }}>
               <svg className="w-5 h-5 text-[#3FAE6F]" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66.95-2.3c.48.17.98.3 1.34.3C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z" />
               </svg>
@@ -134,18 +160,27 @@ export default function Home() {
               </span>
             </div>
 
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-[1.05] mb-6">
+            <h1
+              className="hero-fade-up text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-[1.05] mb-6"
+              style={{ animationDelay: "0.55s" }}
+            >
               Monitor Your Farm
               <br />
               <span className="text-[#3FAE6F]">in Real-Time</span> with Us
             </h1>
 
-            <p className="text-lg text-white/85 leading-relaxed mb-8 max-w-xl">
+            <p
+              className="hero-fade-up text-lg text-white/85 leading-relaxed mb-8 max-w-xl"
+              style={{ animationDelay: "1.1s" }}
+            >
               Professional IoT agriculture platform combining ESP32 sensors, machine learning models,
               and real-time analytics for data-driven farming decisions across Nepal.
             </p>
 
-            <div className="flex flex-wrap gap-4 mb-12">
+            <div
+              className="hero-fade-up flex flex-wrap gap-4 mb-12"
+              style={{ animationDelay: "1.5s" }}
+            >
               <Link
                 href="/login"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-[#2E8B57] hover:bg-[#256d44] text-white font-semibold rounded-full transition-all shadow-lg hover:shadow-xl"
@@ -165,7 +200,10 @@ export default function Home() {
             </div>
 
             {/* stat pills row */}
-            <div className="grid grid-cols-3 gap-6 max-w-lg">
+            <div
+              className="hero-fade-up grid grid-cols-3 gap-6 max-w-lg"
+              style={{ animationDelay: "1.85s" }}
+            >
               <div>
                 <div className="text-3xl font-bold text-white">98%</div>
                 <div className="text-xs text-white/70 uppercase tracking-wider mt-1">ML Accuracy</div>
@@ -194,7 +232,7 @@ export default function Home() {
         </div>
 
         <div className="container mx-auto relative max-w-7xl">
-          <div className="text-center mb-10 max-w-3xl mx-auto">
+          <div className="reveal text-center mb-10 max-w-3xl mx-auto">
             <span className="inline-block px-3 py-1 bg-[#2E8B57]/10 text-[#2E8B57] rounded text-xs font-bold tracking-wide uppercase mb-4 border border-[#2E8B57]/20">
               Live Dashboard
             </span>
@@ -209,7 +247,7 @@ export default function Home() {
           <div className="grid lg:grid-cols-12 gap-10 items-center">
             {/* Tilted dashboard mockup — left column */}
             <div
-              className="lg:col-span-9 relative"
+              className="reveal lg:col-span-9 relative"
               style={{ perspective: "1800px" }}
             >
               <div className="absolute -inset-x-12 -bottom-10 h-40 bg-[#2E8B57]/15 blur-3xl rounded-full" />
@@ -260,7 +298,7 @@ export default function Home() {
             </div>
 
             {/* Right column — three 3D floating icon orbs (no cards) */}
-            <div className="lg:col-span-3 flex lg:flex-col gap-8 items-center justify-center">
+            <div className="reveal-stagger lg:col-span-3 flex lg:flex-col gap-8 items-center justify-center">
               {[
                 {
                   title: "Healthy Soil",
@@ -317,7 +355,7 @@ export default function Home() {
       {/* ───────────────────────── Features ───────────────────────── */}
       <section id="features" className="min-h-screen flex items-center py-16 bg-gray-50 px-4 lg:px-8">
         <div className="container mx-auto max-w-7xl">
-          <div className="text-center mb-10">
+          <div className="reveal text-center mb-10">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
               Complete Agriculture Monitoring System
             </h2>
@@ -326,7 +364,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="reveal-stagger grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {
                 title: "Real-time Monitoring",
@@ -433,7 +471,7 @@ export default function Home() {
       {/* ───────────────────────── How It Works ───────────────────────── */}
       <section id="how-it-works" className="min-h-screen flex items-center py-16 px-4 lg:px-8 bg-gray-50">
         <div className="container mx-auto max-w-7xl pt-12">
-          <div className="text-center mb-10">
+          <div className="reveal text-center mb-10">
             <span className="inline-block px-3 py-1 bg-[#2E8B57]/10 text-[#2E8B57] rounded text-xs font-bold tracking-wide uppercase mb-4 border border-[#2E8B57]/20">
               Architecture &amp; Stack
             </span>
@@ -445,7 +483,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
+          <div className="reveal-stagger grid md:grid-cols-3 gap-6 lg:gap-8">
             {[
               {
                 num: "01",
@@ -503,7 +541,7 @@ export default function Home() {
       {/* ───────────────────────── About / Project ───────────────────────── */}
       <section id="about" className="min-h-screen flex items-center py-16 px-4 lg:px-8 bg-white">
         <div className="container mx-auto max-w-7xl">
-          <div className="text-center mb-10">
+          <div className="reveal text-center mb-10">
             <span className="inline-block px-3 py-1 bg-[#2E8B57]/10 text-[#2E8B57] rounded text-xs font-bold tracking-wide uppercase mb-4 border border-[#2E8B57]/20">
               About the Project
             </span>
@@ -516,7 +554,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid lg:grid-cols-5 gap-8 items-stretch">
+          <div className="reveal-stagger grid lg:grid-cols-5 gap-8 items-stretch">
             {/* Project story */}
             <div className="lg:col-span-3 bg-white rounded-2xl border border-gray-200 p-7 md:p-8 hover:border-[#2E8B57]/40 hover:shadow-xl transition-all">
               <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-4">Our Story</h3>
@@ -604,19 +642,23 @@ export default function Home() {
           </div>
 
           {/* Supervisor cards — bigger gap between them, slightly wider container */}
-          <div className="grid sm:grid-cols-2 gap-10 max-w-4xl mx-auto w-full">
+          <div className="reveal-stagger grid sm:grid-cols-2 gap-10 max-w-4xl mx-auto w-full">
             {[
               {
                 name: "Er. Birendra Singh Dhami",
                 role: "Project Supervisor",
                 photo: "/supervisors/birendra.jpg",
                 initials: "BD",
+                imgScale: 1, // default
+                imgPosition: "center 25%",
               },
               {
                 name: "Er. Kamal Lekhak",
                 role: "Project Supervisor",
                 photo: "/supervisors/kamal.jpg",
                 initials: "KL",
+                imgScale: 0.78, // zoomed out — show more of the photo
+                imgPosition: "center 35%",
               },
             ].map((sup) => (
               <div
@@ -632,7 +674,10 @@ export default function Home() {
                     src={sup.photo}
                     alt={sup.name}
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    style={{ objectPosition: "center 25%" }}
+                    style={{
+                      objectPosition: sup.imgPosition,
+                      transform: `scale(${sup.imgScale})`,
+                    }}
                     onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                   />
                 </div>
@@ -653,7 +698,7 @@ export default function Home() {
           </div>
 
           {/* Acknowledgments — compact under cards */}
-          <div className="bg-[#2E8B57] rounded-xl p-5 text-white shadow-xl max-w-4xl mx-auto w-full">
+          <div className="reveal bg-[#2E8B57] rounded-xl p-5 text-white shadow-xl max-w-4xl mx-auto w-full">
             <div className="flex items-center gap-2 mb-2.5">
               <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
