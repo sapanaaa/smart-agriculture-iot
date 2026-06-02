@@ -379,8 +379,8 @@ export default function OnboardingPage() {
             color: '#fff',
             fontSize: '14px',
           },
-        }); 
-        router.push("/jwtSetup");
+        });
+        router.push("/dashboard");
       } else {
         toast.error(responseData.message, {
           style: {

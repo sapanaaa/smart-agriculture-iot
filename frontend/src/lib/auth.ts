@@ -27,18 +27,6 @@ declare module "next-auth" {
   }
 }
 
-declare module "next-auth/jwt" {
-  interface JWT {
-    id?: string;
-    firstName?: string | null;
-    lastName?: string | null;
-    user_role?: string;
-    status?: string;
-    device_id?: string | null;
-    backendToken?: string;
-  }
-}
-
 export const { handlers, signIn, signOut, auth } = NextAuth({
   // Credentials provider requires JWT session strategy (no DB adapter).
   session: { strategy: "jwt" },

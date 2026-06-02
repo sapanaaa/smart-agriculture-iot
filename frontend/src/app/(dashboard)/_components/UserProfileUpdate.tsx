@@ -32,11 +32,11 @@ import {
 import BackendApi from "./Common";
 
 interface UserEditProfile {
-  firstName: string | undefined;
-  lastName: string | undefined;
+  firstName: string | null | undefined;
+  lastName: string | null | undefined;
   email: string | null | undefined;
-  device_id: string | undefined;
-  user_roles: string | undefined;
+  device_id: string | null | undefined;
+  user_roles: string | null | undefined;
 }
 
 export default function UserProfileUpdatePage({
@@ -55,10 +55,10 @@ export default function UserProfileUpdatePage({
   } = useForm<z.infer<typeof onboardingSchema>>({
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
-      firstName,
-      lastName,
-      device_id,
-      role: user_roles,
+      firstName: firstName ?? undefined,
+      lastName: lastName ?? undefined,
+      device_id: device_id ?? undefined,
+      role: user_roles ?? undefined,
     },
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -251,7 +251,7 @@ export default function UserProfileUpdatePage({
               <Controller
                 name="role"
                 control={control}
-                defaultValue={user_roles}
+                defaultValue={user_roles ?? undefined}
                 render={({ field }) => (
                   <Select
                     {...field}

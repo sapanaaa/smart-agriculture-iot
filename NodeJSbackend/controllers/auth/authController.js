@@ -7,10 +7,14 @@ import { sendVerificationEmail } from "../../utils/mailer.js";
 const VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000; // 24h
 const BCRYPT_ROUNDS = 12;
 
-/** Owner bootstrap: emails listed here are auto-approved as "owner". */
+/** Owner bootstrap: emails in OWNER_EMAIL (comma-separated) are auto-approved as "owner". */
 function isBootstrapOwner(email) {
-  const owner = (process.env.OWNER_EMAIL || "").toLowerCase().trim();
-  return owner && email.toLowerCase().trim() === owner;
+  const owners = (process.env.OWNER_EMAIL || "")
+    .toLowerCase()
+    .split(",")
+    .map((e) => e.trim())
+    .filter(Boolean);
+  return owners.includes(email.toLowerCase().trim());
 }
 
 /**

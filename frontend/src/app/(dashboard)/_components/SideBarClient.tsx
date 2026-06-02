@@ -76,10 +76,21 @@ const menuItems = [
   },
 ];
 
+const adminItem = {
+  title: "Admin Panel",
+  href: "/admin",
+  icon: Users,
+  description: "Manage users & devices",
+};
+
 export default function SidebarClient({ session, children }: any) {
   const pathname = usePathname();
   const [health, setHealth] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const role = session?.user?.user_role;
+  const isAdmin = role === "owner" || role === "admin";
+  const navItems = isAdmin ? [...menuItems, adminItem] : menuItems;
 
   useEffect(() => {
     const fetchHealth = async () => {
@@ -143,7 +154,7 @@ export default function SidebarClient({ session, children }: any) {
       <SidebarContent className="flex-1 overflow-y-auto p-4 space-y-6">
         {/* Main Menu */}
         <SidebarMenu className="space-y-3">
-          {menuItems.map((item) => {
+          {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
 

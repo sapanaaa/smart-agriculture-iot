@@ -5,8 +5,8 @@ import { redirect } from "next/navigation";
 
 /**
  * Guard for protected pages (dashboard, admin, etc).
- * - No session            → /login
- * - Not approved          → /login (login already blocks them, but double-guard)
+ * - No session   → /login
+ * - Not approved → /login (login already blocks them; double-guard)
  */
 export async function ProtectedPage() {
   const session = await auth();
@@ -23,14 +23,12 @@ export async function ProtectedPage() {
 }
 
 /**
- * Admin-only guard. Use inside admin routes.
+ * Admin-only guard.
  */
 export async function AdminOnly() {
   const session = await auth();
 
-  if (!session) {
-    redirect("/login");
-  }
+  if (!session) redirect("/login");
 
   const role = session.user.user_role;
   if (role !== "owner" && role !== "admin") {
@@ -41,18 +39,14 @@ export async function AdminOnly() {
 }
 
 /**
- * Guard for unprotected/auth pages (login, register, landing).
- * If already signed in, route the user onward:
- *   - profile incomplete → /onboarding
- *   - otherwise          → /jwtSetup (mints backend cookie → dashboard)
+ * Guard for unprotected/auth pages (login, register).
+ * If already signed in, send to /jwtSetup, which mints the backend cookie
+ * and then routes onward (onboarding if profile incomplete, else dashboard/admin).
  */
 export async function UnprotectedPage() {
   const session = await auth();
 
   if (session) {
-    if (!session.user.firstName || !session.user.lastName) {
-      redirect("/onboarding");
-    }
     redirect("/jwtSetup");
   }
 
