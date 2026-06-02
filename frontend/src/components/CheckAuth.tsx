@@ -1,36 +1,60 @@
-// component for protected page like dashboard
+// Server-side auth guards for protected / unprotected page groups.
 
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
-// dashboard
-export async function ProtectedPage(){
-    const session = await auth()
+/**
+ * Guard for protected pages (dashboard, admin, etc).
+ * - No session            → /login
+ * - Not approved          → /login (login already blocks them, but double-guard)
+ */
+export async function ProtectedPage() {
+  const session = await auth();
 
-    if(!session){
-        redirect("/login")
-    }
+  if (!session) {
+    redirect("/login");
+  }
 
-    return(
-        <></>
-    )
+  if (session.user.status !== "approved") {
+    redirect("/login");
+  }
+
+  return <></>;
 }
 
-// component for unprotected page
-// login
-// landing page
+/**
+ * Admin-only guard. Use inside admin routes.
+ */
+export async function AdminOnly() {
+  const session = await auth();
+
+  if (!session) {
+    redirect("/login");
+  }
+
+  const role = session.user.user_role;
+  if (role !== "owner" && role !== "admin") {
+    redirect("/dashboard");
+  }
+
+  return <></>;
+}
+
+/**
+ * Guard for unprotected/auth pages (login, register, landing).
+ * If already signed in, route the user onward:
+ *   - profile incomplete → /onboarding
+ *   - otherwise          → /jwtSetup (mints backend cookie → dashboard)
+ */
 export async function UnprotectedPage() {
-    const session = await auth()
+  const session = await auth();
 
-    if(session){
-
-       if(!session.user.firstName || !session.user.lastName || !session.user.device_id || !session.user.user_role) {
-         redirect('/onboarding')
-       }
-       
-       redirect('/jwtSetup')
+  if (session) {
+    if (!session.user.firstName || !session.user.lastName) {
+      redirect("/onboarding");
     }
+    redirect("/jwtSetup");
+  }
 
-    return <></>
-    
+  return <></>;
 }

@@ -1,45 +1,124 @@
-import NextAuth, { DefaultSession } from "next-auth"
-import { MongoDBAdapter } from "@auth/mongodb-adapter"
-import clientPromise from "./mongodb-client"
-import Nodemailer from "next-auth/providers/nodemailer"
+import NextAuth, { DefaultSession } from "next-auth";
+import Credentials from "next-auth/providers/credentials";
 
+const BACKEND = process.env.BACKEND || "http://localhost:5000";
 
-declare module "next-auth"{
+declare module "next-auth" {
   interface Session {
-    user : {
-      firstName : string;
-      lastName : string;
-      user_role : string;
-      device_id : string;
-    } & DefaultSession['user']
+    user: {
+      id: string;
+      firstName: string | null;
+      lastName: string | null;
+      user_role: string;
+      status: string;
+      device_id: string | null;
+      backendToken: string;
+    } & DefaultSession["user"];
+  }
+
+  interface User {
+    id?: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    user_role?: string;
+    status?: string;
+    device_id?: string | null;
+    backendToken?: string;
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id?: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    user_role?: string;
+    status?: string;
+    device_id?: string | null;
+    backendToken?: string;
   }
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: MongoDBAdapter(clientPromise),
+  // Credentials provider requires JWT session strategy (no DB adapter).
+  session: { strategy: "jwt" },
+
   providers: [
-   Nodemailer({
-      server: {
-        host: "smtp.gmail.com",
-        port: 587,
-        secure:false,
-        auth: {
-          user: process.env.GMAIL_USER,
-          pass: process.env.GMAIL_APP_PASSWORD,
-        },
+    Credentials({
+      name: "credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
       },
-      from: process.env.GMAIL_USER,
+      async authorize(credentials) {
+        const email = credentials?.email as string | undefined;
+        const password = credentials?.password as string | undefined;
+        if (!email || !password) return null;
+
+        const res = await fetch(`${BACKEND}/api/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await res.json().catch(() => null);
+
+        if (!res.ok || !data?.success) {
+          // Surface the backend's reason (e.g. PENDING_APPROVAL) to the UI.
+          const reason = data?.code || data?.message || "Login failed";
+          throw new Error(reason);
+        }
+
+        // Returned object becomes the `user` passed to the jwt callback.
+        return {
+          id: data.user.id,
+          email: data.user.email,
+          name:
+            [data.user.firstName, data.user.lastName]
+              .filter(Boolean)
+              .join(" ") || data.user.email,
+          firstName: data.user.firstName ?? null,
+          lastName: data.user.lastName ?? null,
+          user_role: data.user.user_role,
+          status: data.user.status,
+          device_id: data.user.device_id ?? null,
+          backendToken: data.token,
+        };
+      },
     }),
   ],
-  pages : {
-    error : '/login',
-    verifyRequest : "/verify-email",
-    signIn : "/login"
-  }
-})
 
-// import NextAuth from "next-auth"
- 
-// export const { handlers, signIn, signOut, auth } = NextAuth({
-//   providers: [],
-// })
+  callbacks: {
+    async jwt({ token, user }) {
+      // On sign-in, copy user fields into the token.
+      if (user) {
+        token.id = user.id;
+        token.firstName = user.firstName ?? null;
+        token.lastName = user.lastName ?? null;
+        token.user_role = user.user_role;
+        token.status = user.status;
+        token.device_id = user.device_id ?? null;
+        token.backendToken = user.backendToken;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.firstName = (token.firstName as string) ?? null;
+        session.user.lastName = (token.lastName as string) ?? null;
+        session.user.user_role = (token.user_role as string) ?? "farmer";
+        session.user.status = (token.status as string) ?? "approved";
+        session.user.device_id = (token.device_id as string) ?? null;
+        session.user.backendToken = (token.backendToken as string) ?? "";
+      }
+      return session;
+    },
+  },
+
+  pages: {
+    signIn: "/login",
+    error: "/login",
+    verifyRequest: "/verify-email",
+  },
+});
