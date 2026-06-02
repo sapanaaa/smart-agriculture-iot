@@ -1,66 +1,71 @@
 import jwt from "jsonwebtoken";
-import UserModel from "../models/userModel.js";
-import { MongoClient} from "mongodb";
-import mongoose from "mongoose"
 
+/**
+ * GET /api/settingCookies
+ * Header: Authorization: Bearer <backendToken>
+ *
+ * The backend JWT is minted at login (POST /api/auth/login) and carried in
+ * the NextAuth session. This endpoint verifies that token and re-issues it
+ * as an httpOnly `backend_token` cookie so the browser automatically sends
+ * it on subsequent same-site API calls (onboarding, admin, etc).
+ */
 async function SettingCookies(req, res) {
   try {
-    const client = new MongoClient(process.env.MONGODB_URI);
-    await client.connect();
+    const bearer = req.headers?.authorization?.startsWith("Bearer ")
+      ? req.headers.authorization.slice(7)
+      : null;
 
-    const db = client.db("Agricult");
-
-    const sessionToken = req.cookies["authjs.session-token"];
-
-    const session = await db.collection("sessions").findOne({ sessionToken });
-
-    let userId;
-    let userDetails;
-
-    if (session) {
-      userId = session.userId;
-    } else {
-      return res.json({
-        message: "Session not found or expired, please relogin",
+    if (!bearer) {
+      return res.status(401).json({
+        success: false,
+        error: true,
+        message: "Missing authentication token.",
       });
     }
 
-    const user = await UserModel.findById(new mongoose.Types.ObjectId(userId));
-    if (user) {
-      const tokenData = {
-        id: user._id,
-        username: user.firstName,
-        email: user.email,
-        device_id: user.device_id,
-        user_role: user.user_role,
-      };
-
-      const token = jwt.sign(tokenData, process.env.TOKEN_SECRET_KEY, {
-        expiresIn: "1d",
+    let decoded;
+    try {
+      decoded = jwt.verify(bearer, process.env.TOKEN_SECRET_KEY);
+    } catch {
+      return res.status(403).json({
+        success: false,
+        error: true,
+        message: "Invalid or expired token.",
       });
-      
-      const tokenOption = {
-        httpOnly: true,
-        secure: true
-      }
-
-      res.cookie("backend_token", token, tokenOption).json({
-        data: token,
-        success: true,
-        error: false,
-        message: "token added successfully"
-      });
-    }else {
-        throw new Error("Something went wrong with jwt token");
     }
 
+    // Re-sign a fresh 1d token so cookie + payload stay consistent.
+    const token = jwt.sign(
+      {
+        id: decoded.id,
+        email: decoded.email,
+        user_role: decoded.user_role,
+        status: decoded.status,
+      },
+      process.env.TOKEN_SECRET_KEY,
+      { expiresIn: "1d" }
+    );
+
+    const isProd = process.env.NODE_ENV === "production";
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    };
+
+    return res.cookie("backend_token", token, cookieOptions).json({
+      success: true,
+      error: false,
+      message: "Session cookie set.",
+    });
   } catch (error) {
-    res.json({
-        message : error.message || error
-    },{
-        status:500
-    })
+    return res.status(500).json({
+      success: false,
+      error: true,
+      message: error.message || "Failed to set session cookie.",
+    });
   }
 }
 
-export default SettingCookies
+export default SettingCookies;

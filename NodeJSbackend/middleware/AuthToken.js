@@ -3,14 +3,21 @@ import { promisify } from "util";
 
 const verifyAsync = promisify(jwt.verify);
 
+/**
+ * Authentication middleware.
+ * Verifies the backend JWT (cookie `backend_token`, falls back to the
+ * Authorization: Bearer header) and attaches the decoded payload to
+ * req.user = { id, email, user_role, status }.
+ */
 async function authToken(req, res, next) {
   try {
-    const token = {
-      backend_token: req.cookies?.backend_token,
-      session_token: req.cookies?.token,
-    };
+    const bearer = req.headers?.authorization?.startsWith("Bearer ")
+      ? req.headers.authorization.slice(7)
+      : null;
 
-    if (!token.backend_token && !token.session_token) {
+    const backendToken = req.cookies?.backend_token || bearer;
+
+    if (!backendToken) {
       return res.status(401).json({
         message: "You have to login first.",
         error: true,
@@ -18,28 +25,35 @@ async function authToken(req, res, next) {
       });
     }
 
-    const decoded_backendToken = token.backend_token
-      ? await verifyAsync(token.backend_token, process.env.TOKEN_SECRET_KEY)
-      : null;
-
-    const decoded_sessionToken = token.session_token
-      ? await verifyAsync(token.session_token, process.env.AUTH_SECRET)
-      : null;
-
-    if (!decoded_backendToken?.id) {
+    let decoded;
+    try {
+      decoded = await verifyAsync(backendToken, process.env.TOKEN_SECRET_KEY);
+    } catch {
       return res.status(403).json({
-        message: "backend_token is invalid.",
+        message: "Session is invalid or expired. Please login again.",
         error: true,
         success: false,
       });
     }
 
-    console.log("decoded_backendToken", decoded_backendToken);
-    console.log("decoded_sessionToken", decoded_sessionToken);
-    req.userId = decoded_backendToken.id;
+    if (!decoded?.id) {
+      return res.status(403).json({
+        message: "Token payload is invalid.",
+        error: true,
+        success: false,
+      });
+    }
+
+    req.user = {
+      id: decoded.id,
+      email: decoded.email,
+      user_role: decoded.user_role,
+      status: decoded.status,
+    };
+    // Backwards-compat for older handlers that read req.userId.
+    req.userId = decoded.id;
 
     next();
-    
   } catch (err) {
     console.error("Auth error:", err);
     return res.status(403).json({
@@ -48,6 +62,31 @@ async function authToken(req, res, next) {
       success: false,
     });
   }
+}
+
+/**
+ * Authorization middleware factory.
+ * Usage: requireRole("owner"), requireRole("owner", "admin")
+ * Must run after authToken so req.user is populated.
+ */
+export function requireRole(...allowedRoles) {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        message: "Authentication required.",
+        error: true,
+        success: false,
+      });
+    }
+    if (!allowedRoles.includes(req.user.user_role)) {
+      return res.status(403).json({
+        message: "You do not have permission to perform this action.",
+        error: true,
+        success: false,
+      });
+    }
+    next();
+  };
 }
 
 export default authToken;
