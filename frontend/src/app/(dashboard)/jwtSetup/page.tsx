@@ -1,59 +1,25 @@
-"use client";
-
-import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-import BackendApi from "../_components/Common";
-import { useEffect } from "react";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import JwtSetupClient from "./JwtSetupClient";
 
 /**
- * After NextAuth login, exchange the session's backend JWT for an
- * httpOnly `backend_token` cookie (so the browser auto-sends it to the
- * NodeJS API), then route into the dashboard.
+ * Server component: reads the NextAuth session, then hands the backend JWT
+ * + target route to a small client component that sets the httpOnly cookie.
  */
-export default function JwtSetupPage() {
-  const router = useRouter();
-  const { data: session, status } = useSession();
+export default async function JwtSetupPage() {
+  const session = await auth();
 
-  useEffect(() => {
-    if (status !== "authenticated") return;
+  if (!session) {
+    redirect("/login");
+  }
 
-    const run = async () => {
-      try {
-        const token = session?.user?.backendToken;
-        if (!token) {
-          router.push("/login");
-          return;
-        }
+  const token = session.user.backendToken;
+  if (!token) {
+    redirect("/login");
+  }
 
-        const response = await fetch(BackendApi.SettingCookies.url, {
-          method: BackendApi.SettingCookies.method,
-          credentials: "include",
-          headers: { Authorization: `Bearer ${token}` },
-        });
+  const role = session.user.user_role;
+  const destination = role === "owner" || role === "admin" ? "/admin" : "/dashboard";
 
-        if (response.ok) {
-          // Admins/owners land on the admin panel; everyone else on dashboard.
-          const role = session?.user?.user_role;
-          if (role === "owner" || role === "admin") {
-            router.push("/admin");
-          } else {
-            router.push("/dashboard");
-          }
-        } else {
-          router.push("/login");
-        }
-      } catch (error) {
-        console.error("Error setting cookies:", error);
-        router.push("/login");
-      }
-    };
-
-    run();
-  }, [status, session, router]);
-
-  return (
-    <div className="min-h-dvh flex items-center justify-center">
-      <p className="text-gray-500 text-sm">Setting up your session…</p>
-    </div>
-  );
+  return <JwtSetupClient token={token} destination={destination} />;
 }

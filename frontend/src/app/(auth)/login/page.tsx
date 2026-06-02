@@ -1,51 +1,17 @@
-import { Button } from "@/components/ui/button"
-import { Card, CardDescription, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { auth, signIn } from "@/lib/auth"
-import SubmitButton from "@/components/SubmitButton"
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import AuthCard from "./AuthCard";
 
 export default async function LoginPage() {
-    const session = await auth()
+  const session = await auth();
 
+  // Already signed in → route onward.
+  if (session) {
+    if (!session.user.firstName || !session.user.lastName) {
+      redirect("/onboarding");
+    }
+    redirect("/jwtSetup");
+  }
 
-    console.log("login",session)
-    return (
-        <Card className="max-w-sm min-w-xs lg:min-w-sm ">
-
-            <CardHeader>
-
-                <CardTitle className="text-xl w-full">
-                    Login
-                </CardTitle>
-
-                <CardDescription className="">
-                    Enter your email below to login in your account
-                </CardDescription>
-
-            </CardHeader>
-            
-            <CardContent>
-                <form
-                    className="grid gap-6"
-                    action={async (formdata) => {
-                        "use server"
-                        await signIn("nodemailer", formdata)
-                    }}
-                >
-
-                    <div className="grid gap-2">
-                        <Label>Email</Label>
-                        <Input
-                            placeholder="hello@example.com"
-                            required
-                            type="email"
-                            name="email"
-                        />
-                    </div>
-                    <SubmitButton title="Login" />
-                </form>
-            </CardContent>
-        </Card>
-    )
+  return <AuthCard />;
 }
