@@ -95,7 +95,7 @@ export default function AuthCard() {
 
     setLoading(true);
     try {
-      const res = await fetch(`${BACKEND}/api/auth/register`, {
+      const res = await fetch(`${BACKEND}/api/account/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

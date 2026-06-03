@@ -19,10 +19,12 @@ import authToken, { requireRole } from "../middleware/AuthToken.js";
 
 const route = express.Router();
 
-/* ── Public authentication ─────────────────────────────────── */
-route.post("/auth/register", register);
-route.get("/auth/verify", verifyEmail);
-route.post("/auth/login", login);
+/* ── Public authentication (NodeJS) ────────────────────────── */
+/* Namespaced under /api/account to avoid colliding with NextAuth's
+   own /api/auth/* routes served by the Next.js frontend. */
+route.post("/account/register", register);
+route.get("/account/verify", verifyEmail);
+route.post("/account/login", login);
 
 /* ── Session cookie relay (token in Authorization header) ──── */
 route.get("/settingCookies", SettingCookies);
