@@ -96,7 +96,11 @@ export default function SidebarClient({ session, children }: any) {
     const fetchHealth = async () => {
       try {
         setIsLoading(true);
-        const res = await fetch("http://localhost:8000/health");
+        const base =
+          process.env.NODE_ENV === "development"
+            ? "http://localhost:8000"
+            : "";
+        const res = await fetch(`${base}/health`);
         const data = await res.json();
         setHealth(data);
       } catch (error) {

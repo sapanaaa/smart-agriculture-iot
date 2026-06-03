@@ -3,11 +3,14 @@ import { redirect } from "next/navigation";
 import JwtSetupClient from "./JwtSetupClient";
 
 /**
- * Server component: reads the NextAuth session, then hands the backend JWT
- * + target route to a client component that sets the httpOnly cookie before
- * navigating on.
+ * Transitional bootstrap page. Lives OUTSIDE the (dashboard) route group so it
+ * does NOT inherit the ProtectedPage guard (which would bounce unapproved or
+ * mid-login users back to /login and create a redirect loop).
  *
- * Destination logic:
+ * Reads the NextAuth session, then hands the backend JWT + target route to a
+ * client component that sets the httpOnly cookie before navigating on.
+ *
+ * Destination:
  *  - profile incomplete (no first/last name) → /onboarding
  *  - admin/owner                              → /admin
  *  - otherwise                                → /dashboard

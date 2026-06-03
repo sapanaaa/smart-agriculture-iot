@@ -23,8 +23,9 @@ import {
   Trash2,
   AlertTriangle,
 } from "lucide-react";
+import { BACKEND_DOMAIN } from "@/lib/backend";
 
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND || "http://localhost:5000";
+const BACKEND = BACKEND_DOMAIN;
 
 type AppUser = {
   _id: string;

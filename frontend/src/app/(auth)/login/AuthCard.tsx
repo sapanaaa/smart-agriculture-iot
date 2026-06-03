@@ -14,9 +14,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
+import { BACKEND_DOMAIN } from "@/lib/backend";
 
-const BACKEND =
-  process.env.NEXT_PUBLIC_BACKEND || "http://localhost:5000";
+const BACKEND = BACKEND_DOMAIN;
 
 type Mode = "signin" | "register";
 
@@ -73,8 +73,9 @@ export default function AuthCard() {
         setError(friendlyError(res.error));
         return;
       }
-      // Success — send through the session-bootstrap route.
-      router.push("/jwtSetup");
+      // Success — go through the session-bootstrap route. Use replace so the
+      // login page isn't left in history (prevents back-button loops).
+      router.replace("/jwtSetup");
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {

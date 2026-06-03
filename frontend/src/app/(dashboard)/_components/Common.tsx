@@ -1,5 +1,6 @@
-const BackendDomain =
-  process.env.NEXT_PUBLIC_BACKEND || "http://localhost:5000";
+import { BACKEND_DOMAIN } from "@/lib/backend";
+
+const BackendDomain = BACKEND_DOMAIN;
 
 const BackendApi = {
   Onboarding: {

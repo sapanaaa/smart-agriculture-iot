@@ -18,8 +18,9 @@ import {
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { BACKEND_DOMAIN } from "@/lib/backend";
 
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND || "http://localhost:5000";
+const BACKEND = BACKEND_DOMAIN;
 
 type State =
   | { kind: "inbox" } // no token → just show "check your email"
