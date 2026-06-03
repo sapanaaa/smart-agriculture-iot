@@ -73,14 +73,16 @@ export async function register(req, res) {
     try {
       await sendVerificationEmail(normalizedEmail, rawToken);
     } catch (mailErr) {
-      // Account is created; surface email failure so the user can retry.
+      // Roll back the half-created account so the user can cleanly retry
+      // once email is configured (avoids a stuck, unverifiable account).
       console.error("Verification email failed:", mailErr.message);
-      return res.status(201).json({
-        success: true,
-        error: false,
+      await UserModel.deleteOne({ _id: user._id }).catch(() => {});
+      return res.status(502).json({
+        success: false,
+        error: true,
         emailSent: false,
         message:
-          "Account created, but the verification email could not be sent. Please contact an administrator.",
+          "We couldn't send the verification email right now. Please try again in a few minutes or contact an administrator.",
       });
     }
 
