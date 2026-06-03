@@ -151,7 +151,7 @@ export default function Home() {
         <div className="container mx-auto relative z-10 pt-24 pb-20">
           <div className="max-w-2xl">
             {/* small category label */}
-            <div className="hero-fade-up flex items-center gap-2 mb-6" style={{ animationDelay: "0.2s" }}>
+            <div className="hero-fade-up flex items-center gap-2 mb-6" style={{ animationDelay: "0.05s" }}>
               <svg className="w-5 h-5 text-[#3FAE6F]" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66.95-2.3c.48.17.98.3 1.34.3C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z" />
               </svg>
@@ -162,7 +162,7 @@ export default function Home() {
 
             <h1
               className="hero-fade-up text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-[1.05] mb-6"
-              style={{ animationDelay: "0.55s" }}
+              style={{ animationDelay: "0.15s" }}
             >
               Monitor Your Farm
               <br />
@@ -171,7 +171,7 @@ export default function Home() {
 
             <p
               className="hero-fade-up text-lg text-white/85 leading-relaxed mb-8 max-w-xl"
-              style={{ animationDelay: "1.1s" }}
+              style={{ animationDelay: "0.3s" }}
             >
               Professional IoT agriculture platform combining ESP32 sensors, machine learning models,
               and real-time analytics for data-driven farming decisions across Nepal.
@@ -179,7 +179,7 @@ export default function Home() {
 
             <div
               className="hero-fade-up flex flex-wrap gap-4 mb-12"
-              style={{ animationDelay: "1.5s" }}
+              style={{ animationDelay: "0.42s" }}
             >
               <Link
                 href="/login"
@@ -202,7 +202,7 @@ export default function Home() {
             {/* stat pills row */}
             <div
               className="hero-fade-up grid grid-cols-3 gap-6 max-w-lg"
-              style={{ animationDelay: "1.85s" }}
+              style={{ animationDelay: "0.52s" }}
             >
               <div>
                 <div className="text-3xl font-bold text-white">98%</div>
