@@ -28,6 +28,12 @@ import {
 } from "../_components/DashboardComponents";
 import { usePolling } from "@/app/hooks/useApi";
 import {
+  Thermometer,
+  Droplets,
+  Sprout,
+  FlaskConical,
+} from "lucide-react";
+import {
   getLatestReading,
   getSensorHistory,
   getCurrentWeather,
@@ -421,10 +427,10 @@ export default function OverviewPage() {
           decimals={1}
           unit="°C"
           color={T.rose}
-          icon="🌡️"
+          icon={<Thermometer size={15} style={{ verticalAlign: "-2px" }} />}
           sub={
             sensor?.temperature_c && sensor?.temperature_c > 35
-              ? "⚠ Heat stress"
+              ? "Heat stress"
               : "Optimal range"
           }
         />
@@ -434,7 +440,7 @@ export default function OverviewPage() {
           decimals={1}
           unit="%"
           color={T.blue}
-          icon="💧"
+          icon={<Droplets size={15} style={{ verticalAlign: "-2px" }} />}
           sub={`${sensor?.humidity_pct || 0}% · Normal`}
         />
         <Metric
@@ -443,10 +449,10 @@ export default function OverviewPage() {
           decimals={1}
           unit="%"
           color={T.accent}
-          icon="🌱"
+          icon={<Sprout size={15} style={{ verticalAlign: "-2px" }} />}
           sub={
             sensor?.soil_moisture_pct && sensor?.soil_moisture_pct < 30
-              ? "⚠ Low moisture"
+              ? "Low moisture"
               : "Healthy"
           }
         />
@@ -456,7 +462,7 @@ export default function OverviewPage() {
           decimals={2}
           unit="pH"
           color={T.amber}
-          icon="⚗️"
+          icon={<FlaskConical size={15} style={{ verticalAlign: "-2px" }} />}
           sub={sensor?.ph_category || "Neutral"}
         />
       </div>

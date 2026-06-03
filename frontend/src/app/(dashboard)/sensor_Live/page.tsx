@@ -14,6 +14,7 @@ import {
 } from "../_components/DashboardComponents";
 import { usePolling } from "@/app/hooks/useApi";
 import { getLatestReading, getSensorHistory } from "@/app/services/api";
+import { Thermometer, Droplets, Sprout, FlaskConical } from "lucide-react";
 
 // Define interfaces for type safety
 interface SensorReading {
