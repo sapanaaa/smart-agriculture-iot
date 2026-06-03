@@ -18,6 +18,10 @@ await connectDB()
 
 const app = express()
 
+// Behind nginx (production): trust the proxy so `secure` cookies and
+// req.protocol reflect the original HTTPS request.
+app.set("trust proxy", 1)
+
 const allowedOrigins = [
     process.env.FRONTEND_URL,
     process.env.MLSERVER_URL

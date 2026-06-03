@@ -1,7 +1,10 @@
 import NextAuth, { DefaultSession } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 
-const BACKEND = process.env.BACKEND || "http://localhost:5000";
+// Server-side base URL for reaching the NodeJS backend from within the
+// Next.js container. In production docker-compose sets BACKEND=http://nodejs:5000
+// (the internal service name). Falls back to that same value.
+const BACKEND = process.env.BACKEND || "http://nodejs:5000";
 
 declare module "next-auth" {
   interface Session {

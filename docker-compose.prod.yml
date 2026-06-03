@@ -11,6 +11,15 @@ services:
       ML_MODELS_DIR: /app/ml/saved_models
       PYTHONUNBUFFERED: 1
 
+  nodejs:
+    environment:
+      NODE_ENV: production   # enables secure cookies + prod behaviour
+
+  frontend:
+    environment:
+      NODE_ENV: production
+      BACKEND: http://nodejs:5000   # server-side calls to NodeJS container
+
   nginx:
     image: nginx:alpine
     networks: [agrisense-net]

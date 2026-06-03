@@ -44,7 +44,7 @@ function VerifyEmailInner() {
     const verify = async () => {
       try {
         const res = await fetch(
-          `${BACKEND}/api/auth/verify?token=${encodeURIComponent(
+          `${BACKEND}/api/account/verify?token=${encodeURIComponent(
             token
           )}&email=${encodeURIComponent(email)}`
         );

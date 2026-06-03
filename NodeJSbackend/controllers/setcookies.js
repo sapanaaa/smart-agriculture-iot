@@ -46,11 +46,14 @@ async function SettingCookies(req, res) {
       { expiresIn: "1d" }
     );
 
+    // Behind nginx everything is same-origin over HTTPS, so a Lax,
+    // Secure, httpOnly cookie is the right call. (Express must trust the
+    // proxy for `secure` to register correctly — see index.js.)
     const isProd = process.env.NODE_ENV === "production";
     const cookieOptions = {
       httpOnly: true,
       secure: isProd,
-      sameSite: isProd ? "none" : "lax",
+      sameSite: "lax",
       maxAge: 24 * 60 * 60 * 1000,
     };
 

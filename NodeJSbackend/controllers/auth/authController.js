@@ -18,7 +18,7 @@ function isBootstrapOwner(email) {
 }
 
 /**
- * POST /api/auth/register
+ * POST /api/account/register
  * Body: { email, password, firstName?, lastName? }
  * Creates a pending_verification account and emails a verification link.
  */
@@ -102,7 +102,7 @@ export async function register(req, res) {
 }
 
 /**
- * GET /api/auth/verify?token=...&email=...
+ * GET /api/account/verify?token=...&email=...
  * Confirms the email and moves the account to pending_approval
  * (or straight to approved for the bootstrap owner).
  */

@@ -1,13 +1,9 @@
 /**
  * Base URL for browser-side calls to the NodeJS backend.
  *
- * - Production: empty string → relative "/api/..." paths, served on the same
- *   domain and proxied to the NodeJS container by nginx. (The browser must
- *   never be told to hit http://localhost:5000 — that's the server's own host.)
- * - Local dev:  http://localhost:5000, because the Next.js dev server (3000)
- *   and the Express backend (5000) run on different ports.
- * - Override:   NEXT_PUBLIC_BACKEND wins if explicitly set.
+ * Always empty → relative "/api/..." paths. The browser is always on the
+ * production domain (https://smartagri.cloudcoesis.com) and nginx proxies
+ * /api/account/* and /api/admin/* to the NodeJS container. Using relative
+ * paths means it works regardless of domain and avoids all CORS issues.
  */
-export const BACKEND_DOMAIN =
-  process.env.NEXT_PUBLIC_BACKEND ??
-  (process.env.NODE_ENV === "development" ? "http://localhost:5000" : "");
+export const BACKEND_DOMAIN = "";

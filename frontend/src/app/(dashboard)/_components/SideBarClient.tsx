@@ -96,11 +96,8 @@ export default function SidebarClient({ session, children }: any) {
     const fetchHealth = async () => {
       try {
         setIsLoading(true);
-        const base =
-          process.env.NODE_ENV === "development"
-            ? "http://localhost:8000"
-            : "";
-        const res = await fetch(`${base}/health`);
+        // Relative path → nginx proxies /health to FastAPI in production.
+        const res = await fetch(`/health`);
         const data = await res.json();
         setHealth(data);
       } catch (error) {

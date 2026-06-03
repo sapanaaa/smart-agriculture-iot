@@ -38,7 +38,6 @@ export async function sendVerificationEmail(to, token) {
   const verifyUrl = `${base}/verify-email?token=${encodeURIComponent(
     token
   )}&email=${encodeURIComponent(to)}`;
-
   const html = `
   <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#1a1a1a">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">

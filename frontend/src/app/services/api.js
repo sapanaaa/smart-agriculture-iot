@@ -2,15 +2,12 @@
 // ─────────────────────────────────────────────────────────────
 // Central API service — all HTTP calls to the FastAPI backend.
 //
-// Production: empty base → relative "/api/..." paths, proxied to the FastAPI
-//   container by nginx (see nginx.conf: /api/sensors, /api/recommend, etc).
-// Local dev:  http://localhost:8000 (FastAPI dev server).
-// Override:   NEXT_PUBLIC_MLSERVER wins if explicitly set.
+// Always relative "/api/..." paths: the browser is on the production domain
+// and nginx proxies /api/sensors, /api/recommend, /api/analytics, /api/weather
+// to the FastAPI container.
 // ─────────────────────────────────────────────────────────────
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_MLSERVER ??
-  (process.env.NODE_ENV === "development" ? "http://localhost:8000" : "");
+const API_BASE_URL = "";
 export const BACKEND_URL = API_BASE_URL;
 
 async function request(path, options = {}) {
