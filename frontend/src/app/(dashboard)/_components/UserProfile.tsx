@@ -1,10 +1,10 @@
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import UserProfileUpdatePage from "./UserProfileUpdate";
-import { auth } from "@/lib/auth";
+import { safeAuth } from "@/lib/safeAuth";
 
 export default async function UserProfilePage() {
-    const session = await auth()
+    const session = await safeAuth()
     return (
         <div>
             <Dialog>

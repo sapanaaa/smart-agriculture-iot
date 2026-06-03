@@ -83,7 +83,8 @@ import {
   DropdownMenuGroup,
   DropdownMenuShortcut
 } from "@/components/ui/dropdown-menu";
-import { auth } from "@/lib/auth";
+import { signOut } from "@/lib/auth";
+import { safeAuth } from "@/lib/safeAuth";
 import getAvatarName from "@/lib/getAvatarName";
 import { 
   ChevronDown, 
@@ -96,7 +97,6 @@ import {
   Shield,
   Bell
 } from "lucide-react";
-import { signOut } from "@/lib/auth";
 import UserProfilePage from "./UserProfile";
 
 interface IUserProfileDropdown {
@@ -105,7 +105,7 @@ interface IUserProfileDropdown {
 }
 
 export default async function UserProfileDropdownPage({ isArrowUp, isFullName }: IUserProfileDropdown) {
-    const session = await auth()
+    const session = await safeAuth()
     const userInitials = getAvatarName(
         session?.user.firstName as string,
         session?.user.lastName as string

@@ -232,10 +232,66 @@ export async function setUserRole(req, res) {
 }
 
 /**
- * PATCH /api/admin/users/:id/devices
- * Body: { devices: string[] }  — replaces the device list.
- * Also keeps the legacy single `device_id` in sync (first device).
+ * DELETE /api/admin/users/:id
+ * Permanently removes a user. Owner accounts cannot be deleted, and an
+ * admin cannot delete their own account.
  */
+export async function deleteUser(req, res) {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res
+        .status(400)
+        .json({ success: false, error: true, message: "Invalid user id." });
+    }
+
+    if (String(id) === String(req.user.id)) {
+      return res.status(400).json({
+        success: false,
+        error: true,
+        message: "You cannot delete your own account.",
+      });
+    }
+
+    const target = await UserModel.findById(id);
+    if (!target) {
+      return res
+        .status(404)
+        .json({ success: false, error: true, message: "User not found." });
+    }
+    if (target.user_role === "owner") {
+      return res.status(403).json({
+        success: false,
+        error: true,
+        message: "Owner accounts cannot be deleted.",
+      });
+    }
+
+    // Only the owner may delete an admin.
+    if (target.user_role === "admin" && req.user.user_role !== "owner") {
+      return res.status(403).json({
+        success: false,
+        error: true,
+        message: "Only the owner can delete an admin account.",
+      });
+    }
+
+    await UserModel.findByIdAndDelete(id);
+
+    return res.json({
+      success: true,
+      error: false,
+      message: "User deleted.",
+      data: { id },
+    });
+  } catch (err) {
+    console.error("deleteUser error:", err);
+    return res
+      .status(500)
+      .json({ success: false, error: true, message: "Failed to delete user." });
+  }
+}
+
 export async function setUserDevices(req, res) {
   try {
     const { id } = req.params;

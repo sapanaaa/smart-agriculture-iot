@@ -12,6 +12,7 @@ import {
   suspendUser,
   setUserRole,
   setUserDevices,
+  deleteUser,
 } from "../controllers/admin/adminController.js";
 
 import authToken, { requireRole } from "../middleware/AuthToken.js";
@@ -37,5 +38,6 @@ route.patch("/admin/users/:id/reject", authToken, requireRole("owner", "admin"),
 route.patch("/admin/users/:id/suspend", authToken, requireRole("owner", "admin"), suspendUser);
 route.patch("/admin/users/:id/role", authToken, requireRole("owner", "admin"), setUserRole);
 route.patch("/admin/users/:id/devices", authToken, requireRole("owner", "admin"), setUserDevices);
+route.delete("/admin/users/:id", authToken, requireRole("owner", "admin"), deleteUser);
 
 export default route;

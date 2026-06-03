@@ -20,6 +20,8 @@ import {
   Cpu,
   Loader2,
   RefreshCw,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND || "http://localhost:5000";
@@ -70,6 +72,7 @@ export default function AdminPanel({
   const [search, setSearch] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [deviceModal, setDeviceModal] = useState<AppUser | null>(null);
+  const [deleteModal, setDeleteModal] = useState<AppUser | null>(null);
 
   const authHeaders = {
     "Content-Type": "application/json",
@@ -166,6 +169,29 @@ export default function AdminPanel({
       "Role updated.",
       u._id
     );
+
+  async function confirmDelete(u: AppUser) {
+    setBusyId(u._id);
+    try {
+      const res = await fetch(`${BACKEND}/api/admin/users/${u._id}`, {
+        method: "DELETE",
+        headers: authHeaders,
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success("User deleted.");
+        setDeleteModal(null);
+        await loadUsers();
+      } else {
+        toast.error(data.message || "Failed to delete user.");
+      }
+    } catch {
+      toast.error("Could not reach the server.");
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   const counts = {
     pending: users.filter((u) => u.status === "pending_approval").length,
@@ -369,6 +395,18 @@ export default function AdminPanel({
                               Suspend
                             </Button>
                           )}
+                          {!isSelf && !isOwnerRow && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setDeleteModal(u)}
+                              disabled={busy}
+                              className="h-8 gap-1 text-red-600 border-red-200 hover:bg-red-50"
+                              title="Delete user"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          )}
                           {busy && (
                             <Loader2 className="size-4 animate-spin text-gray-400" />
                           )}
@@ -393,6 +431,56 @@ export default function AdminPanel({
             loadUsers();
           }}
         />
+      )}
+
+      {deleteModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+          onClick={() => setDeleteModal(null)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-11 h-11 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="size-5 text-red-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">Delete user?</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-1">
+              This will permanently remove{" "}
+              <span className="font-semibold text-gray-900">
+                {[deleteModal.firstName, deleteModal.lastName]
+                  .filter(Boolean)
+                  .join(" ") || deleteModal.email}
+              </span>{" "}
+              ({deleteModal.email}).
+            </p>
+            <p className="text-xs text-gray-400 mb-6">
+              This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setDeleteModal(null)}
+                disabled={busyId === deleteModal._id}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => confirmDelete(deleteModal)}
+                disabled={busyId === deleteModal._id}
+                className="bg-red-600 hover:bg-red-700 text-white gap-2"
+              >
+                {busyId === deleteModal._id && (
+                  <Loader2 className="size-4 animate-spin" />
+                )}
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

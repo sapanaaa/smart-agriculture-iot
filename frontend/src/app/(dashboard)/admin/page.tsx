@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { safeAuth } from "@/lib/safeAuth";
 import { redirect } from "next/navigation";
 import AdminPanel from "./AdminPanel";
 
@@ -7,7 +7,7 @@ import AdminPanel from "./AdminPanel";
  * and again on every backend route (requireRole middleware).
  */
 export default async function AdminPage() {
-  const session = await auth();
+  const session = await safeAuth();
 
   if (!session) redirect("/login");
 

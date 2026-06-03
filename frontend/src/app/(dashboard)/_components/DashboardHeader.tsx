@@ -1,11 +1,11 @@
-import { auth } from "@/lib/auth"
+import { safeAuth } from "@/lib/safeAuth"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import UserProfileDropdownPage from "./UserProfileDropDown"
 import { Sparkles } from "lucide-react"
 
 export default async function DashboardHeader(){
     
-    const session = await auth()
+    const session = await safeAuth()
     
     // Role color mapping with deep blue navy theme
     const roleColors = {

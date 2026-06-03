@@ -39,6 +39,10 @@ const BackendApi = {
     url: `${BackendDomain}/api/admin/users/${id}/devices`,
     method: "patch",
   }),
+  DeleteUser: (id: string) => ({
+    url: `${BackendDomain}/api/admin/users/${id}`,
+    method: "delete",
+  }),
 };
 
 export default BackendApi;

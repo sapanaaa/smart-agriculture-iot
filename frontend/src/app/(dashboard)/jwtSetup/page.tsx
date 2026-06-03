@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { safeAuth } from "@/lib/safeAuth";
 import { redirect } from "next/navigation";
 import JwtSetupClient from "./JwtSetupClient";
 
@@ -13,7 +13,7 @@ import JwtSetupClient from "./JwtSetupClient";
  *  - otherwise                                → /dashboard
  */
 export default async function JwtSetupPage() {
-  const session = await auth();
+  const session = await safeAuth();
 
   if (!session) redirect("/login");
 

@@ -109,4 +109,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     error: "/login",
     verifyRequest: "/verify-email",
   },
+
+  // Suppress the noisy JWTSessionError that fires when a visitor still holds
+  // a stale/old session cookie (e.g. from the previous magic-link setup).
+  // It is harmless — safeAuth() already treats it as "logged out" — but
+  // NextAuth logs it via console.error which triggers the dev error overlay.
+  logger: {
+    error(error: Error) {
+      if (error?.name === "JWTSessionError" || error?.name === "JWEInvalid") {
+        return;
+      }
+      console.error("[auth]", error);
+    },
+    warn() {},
+  },
 });
