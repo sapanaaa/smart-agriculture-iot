@@ -1,17 +1,7 @@
-import { redirect } from "next/navigation";
-import { safeAuth } from "@/lib/safeAuth";
 import AuthCard from "./AuthCard";
 
-export default async function LoginPage() {
-  const session = await safeAuth();
-
-  // Already signed in → route onward.
-  if (session) {
-    if (!session.user.firstName || !session.user.lastName) {
-      redirect("/onboarding");
-    }
-    redirect("/jwtSetup");
-  }
-
+// The (auth) layout already redirects usable sessions to /jwtSetup, so this
+// page just renders the sign-in / register card.
+export default function LoginPage() {
   return <AuthCard />;
 }

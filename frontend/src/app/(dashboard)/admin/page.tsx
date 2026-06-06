@@ -5,6 +5,9 @@ import AdminPanel from "./AdminPanel";
 /**
  * Admin panel — owner/admin only. RBAC is enforced here (frontend guard)
  * and again on every backend route (requireRole middleware).
+ *
+ * The (dashboard) layout already verified the session is usable, so here we
+ * only need the role check.
  */
 export default async function AdminPage() {
   const session = await safeAuth();

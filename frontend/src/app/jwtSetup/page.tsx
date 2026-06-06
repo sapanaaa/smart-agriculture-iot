@@ -4,25 +4,20 @@ import JwtSetupClient from "./JwtSetupClient";
 
 /**
  * Transitional bootstrap page. Lives OUTSIDE the (dashboard) route group so it
- * does NOT inherit the ProtectedPage guard (which would bounce unapproved or
- * mid-login users back to /login and create a redirect loop).
+ * does NOT inherit the ProtectedPage guard.
  *
- * Reads the NextAuth session, then hands the backend JWT + target route to a
- * client component that sets the httpOnly cookie before navigating on.
- *
- * Destination:
- *  - profile incomplete (no first/last name) → /onboarding
- *  - admin/owner                              → /admin
- *  - otherwise                                → /dashboard
+ * Loop-safety: this page must NEVER redirect back to /login while a session
+ * exists — /login redirects logged-in users here, so a bounce back would loop.
+ * - No session at all          → /login (safe: no session, /login shows form)
+ * - Session but no backendToken → JwtSetupClient signs the user out, then /login
+ * - Session + token            → set cookie (best effort) and proceed onward
  */
 export default async function JwtSetupPage() {
   const session = await safeAuth();
 
   if (!session) redirect("/login");
 
-  const token = session.user.backendToken;
-  if (!token) redirect("/login");
-
+  const token = session.user.backendToken ?? "";
   const { firstName, lastName, user_role } = session.user;
 
   let destination = "/dashboard";
