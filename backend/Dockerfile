@@ -46,7 +46,10 @@ RUN mkdir -p ml/saved_models
 
 # Add startup entrypoint script
 COPY docker-entrypoint.sh /app/
-RUN chmod +x /app/docker-entrypoint.sh
+# Strip any Windows CR characters and make it executable.
+# Avoids "exec ...: no such file or directory" caused by CRLF line endings.
+RUN sed -i 's/\r$//' /app/docker-entrypoint.sh \
+    && chmod +x /app/docker-entrypoint.sh
 
 EXPOSE 8000
 
