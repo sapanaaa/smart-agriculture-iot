@@ -1,14 +1,14 @@
 TTL Irrigation Results
-Accuracy: 98.47%
+Accuracy: 99.50%
 
                                             precision    recall  f1-score   support
 
-Sufficient Moisture — No Irrigation Needed       0.98      1.00      0.99       161
-         Moderate — Irrigation Recommended       1.00      0.99      1.00       614
-  Moderate — Irrigation Highly Recommended       0.99      0.97      0.98       375
-              Very Dry — Irrigation Needed       0.95      0.98      0.96       236
-    Very Dry — Immediate Irrigation Needed       0.99      0.98      0.99       114
+Sufficient Moisture — No Irrigation Needed       1.00      1.00      1.00       441
+         Moderate — Irrigation Recommended       0.99      1.00      1.00       542
+  Moderate — Irrigation Highly Recommended       1.00      0.99      1.00       372
+              Very Dry — Irrigation Needed       1.00      0.99      0.99       306
+    Very Dry — Immediate Irrigation Needed       0.97      1.00      0.99       139
 
-                                  accuracy                           0.98      1500
-                                 macro avg       0.98      0.98      0.98      1500
-                              weighted avg       0.98      0.98      0.98      1500
+                                  accuracy                           0.99      1800
+                                 macro avg       0.99      1.00      0.99      1800
+                              weighted avg       1.00      0.99      1.00      1800

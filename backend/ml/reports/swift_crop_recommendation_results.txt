@@ -1,23 +1,27 @@
 SwiFT Crop Recommendation Results
-Accuracy: 77.14%
+Accuracy: 73.64%
 
               precision    recall  f1-score   support
 
        apple       0.94      1.00      0.97        15
-      banana       0.93      0.87      0.90        15
-   blackgram       0.77      0.67      0.71        15
-    chickpea       0.83      1.00      0.91        15
-        jute       0.65      0.73      0.69        15
- kidneybeans       0.80      0.80      0.80        15
-      lentil       0.40      0.40      0.40        15
-       maize       0.67      0.80      0.73        15
-       mango       0.72      0.87      0.79        15
-    mungbean       0.73      0.73      0.73        15
-      orange       1.00      0.73      0.85        15
-  pigeonpeas       0.75      0.40      0.52        15
-        rice       0.80      0.80      0.80        15
+      banana       0.69      0.60      0.64        15
+   blackgram       0.83      0.67      0.74        15
+    chickpea       0.79      1.00      0.88        15
+        jute       0.48      0.73      0.58        15
+ kidneybeans       0.85      0.73      0.79        15
+      lentil       0.56      0.33      0.42        15
+       maize       0.91      0.67      0.77        15
+       mango       0.75      1.00      0.86        15
+    mungbean       0.69      0.73      0.71        15
+     mustard       0.60      0.70      0.65        30
+      orange       0.72      0.87      0.79        15
+  pigeonpeas       0.83      0.67      0.74        15
+      potato       0.87      0.90      0.89        30
+        rice       0.83      0.67      0.74        15
+     soybean       0.74      0.83      0.78        30
   watermelon       0.88      1.00      0.94        15
+       wheat       0.53      0.33      0.41        30
 
-    accuracy                           0.77       210
-   macro avg       0.78      0.77      0.77       210
-weighted avg       0.78      0.77      0.77       210
+    accuracy                           0.74       330
+   macro avg       0.75      0.75      0.74       330
+weighted avg       0.74      0.74      0.73       330
