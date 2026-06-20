@@ -63,6 +63,12 @@ class Settings(BaseSettings):
 
     # ── Gemini AI (Phase 9) ───────────────────────────────────
     GEMINI_API_KEY:      str   = ""
+    # Model used for bilingual advice generation. Keep on a model that still
+    # has a free tier — gemini-2.0-flash was zeroed out (429 limit:0).
+    # Good free options: gemini-2.5-flash (better quality) or
+    # gemini-2.5-flash-lite (higher free quota). Override via env if Google
+    # rotates models again.
+    GEMINI_MODEL:        str   = "gemini-2.5-flash"
 
 
 # Single instance imported everywhere

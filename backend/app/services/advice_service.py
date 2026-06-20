@@ -12,7 +12,14 @@ from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
-GEMINI_MODEL = "gemini-2.0-flash"
+
+def _get_model() -> str:
+    """Resolve the Gemini model name from settings/env, with a safe default."""
+    try:
+        from app.core.settings import settings
+        return getattr(settings, "GEMINI_MODEL", None) or "gemini-2.5-flash"
+    except Exception:
+        return os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 
 
 @dataclass
@@ -47,8 +54,9 @@ def _call_gemini(prompt_en: str, prompt_np: str) -> Optional[tuple[str, str]]:
         from google import genai
         client = genai.Client(api_key=api_key)
 
-        resp_en = client.models.generate_content(model=GEMINI_MODEL, contents=prompt_en)
-        resp_np = client.models.generate_content(model=GEMINI_MODEL, contents=prompt_np)
+        model = _get_model()
+        resp_en = client.models.generate_content(model=model, contents=prompt_en)
+        resp_np = client.models.generate_content(model=model, contents=prompt_np)
 
         en = (resp_en.text or "").strip()
         np_text = (resp_np.text or "").strip()
