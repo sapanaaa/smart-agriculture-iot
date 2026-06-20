@@ -61,6 +61,16 @@ jobs:
           # Clean up local temp files
           rm -f backend.env nodejs.env frontend.env
 
+      - name: Ensure EC2 app directory is writable by deploy user
+        env:
+          EC2_HOST: ${{ steps.ec2_ip.outputs.public_ip }}
+        run: |
+          # Docker can auto-create bind-mount source dirs (e.g. ml/saved_models)
+          # as root, which then blocks rsync running as 'ubuntu'. Pre-create the
+          # tree and hand ownership back to ubuntu so rsync can always write.
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@$EC2_HOST \
+            "sudo mkdir -p /home/ubuntu/app/backend/ml/saved_models && sudo chown -R ubuntu:ubuntu /home/ubuntu/app"
+
       - name: Deploy application to EC2
         env:
           EC2_HOST: ${{ steps.ec2_ip.outputs.public_ip }}
