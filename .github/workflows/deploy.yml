@@ -117,19 +117,24 @@ jobs:
 
       - name: Verify deployment
         env:
-          EC2_HOST: ${{ steps.ec2_ip.outputs.public_ip }}
+          # nginx terminates TLS for this domain and serves /health from FastAPI.
+          # Hitting the public IP over HTTP only yields a 301 redirect, so we
+          # verify against the real HTTPS endpoint instead.
+          HEALTH_URL: https://smartagri.cloudcoesis.com/health
         run: |
-          # Wait for services to be ready
-          sleep 10
-
-          # Check health endpoint
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://$EC2_HOST/health)
-
-          if [ "$HTTP_CODE" == "200" ]; then
-            echo "✅ Deployment successful! Health check passed."
-          else
-            echo "⚠️ Health check returned: $HTTP_CODE (services may still be starting)"
-          fi
+          echo "Waiting for services to become healthy at $HEALTH_URL ..."
+          HTTP_CODE=000
+          for i in $(seq 1 12); do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -L "$HEALTH_URL" || echo 000)
+            if [ "$HTTP_CODE" == "200" ]; then
+              echo "✅ Deployment successful! Health check passed (attempt $i)."
+              exit 0
+            fi
+            echo "  attempt $i: got $HTTP_CODE, retrying in 10s..."
+            sleep 10
+          done
+          echo "⚠️ Health check did not return 200 after ~2min (last: $HTTP_CODE)."
+          echo "Services may still be starting or the build failed — check container logs via SSH."
 
       - name: Deployment summary
         if: always()
@@ -140,9 +145,9 @@ jobs:
           echo "Deployment Status: ${{ job.status }}"
           echo "========================================="
           echo ""
-          echo "🌐 Application URL: http://$EC2_HOST"
-          echo "🔍 Health Check: http://$EC2_HOST/health"
-          echo "📊 FastAPI Docs: http://$EC2_HOST/docs"
+          echo "🌐 Application URL: https://smartagri.cloudcoesis.com"
+          echo "🔍 Health Check: https://smartagri.cloudcoesis.com/health"
+          echo "📊 FastAPI Docs: https://smartagri.cloudcoesis.com/docs"
           echo ""
           echo "SSH Command:"
           echo "ssh -i ~/.ssh/id_rsa ubuntu@$EC2_HOST"
