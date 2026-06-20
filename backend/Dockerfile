@@ -54,5 +54,10 @@ RUN sed -i 's/\r$//' /app/docker-entrypoint.sh \
 EXPOSE 8000
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
-# 2 workers default; override via UVICORN_WORKERS env var in prod
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers ${UVICORN_WORKERS:-2}"]
+# Single worker by default. The app runs ONE MQTT subscriber that holds live
+# sensor state in module-level memory (app/services/mqtt_service.py). Running
+# >1 worker makes each process start its own MQTT client with the same
+# MQTT_CLIENT_ID, causing an endless "session taken over" reconnect loop and a
+# split in-memory cache. Keep UVICORN_WORKERS=1 unless the MQTT subscriber is
+# extracted into its own dedicated process.
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers ${UVICORN_WORKERS:-1}"]

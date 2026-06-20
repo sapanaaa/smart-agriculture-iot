@@ -7,7 +7,11 @@ services:
       # Bind-mount ML models from EC2 host directory
       - ./backend/ml/saved_models:/app/ml/saved_models:ro
     environment:
-      UVICORN_WORKERS: "4"   # increase workers for production load
+      # MUST stay 1: the app runs a single in-process MQTT subscriber with a
+      # fixed MQTT_CLIENT_ID and an in-memory sensor cache. More than one worker
+      # causes an endless "session taken over" MQTT reconnect loop and a split
+      # cache. Do not raise without extracting MQTT into its own process.
+      UVICORN_WORKERS: "1"
       ML_MODELS_DIR: /app/ml/saved_models
       PYTHONUNBUFFERED: 1
 
