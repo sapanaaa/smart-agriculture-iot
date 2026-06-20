@@ -1,11 +1,12 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   T, F, Card, Err, ConfRow, Badge, Divider, Skeleton, fmt,
 } from "../_components/DashboardComponents";
 import {
   postCropRecommendation, postCompleteReport, postGenerateReport,
   postFertilizerRecommendation, postIrrigationRecommendation, postSoilFertility,
+  getLatestReading, getCurrentWeather,
 } from "@/app/services/api";
 import LanguageToggle, { type Lang } from "../_components/LanguageToggle";
 import SoilFertilityCard from "../_components/SoilFertilityCard";
@@ -124,24 +125,71 @@ export default function AIAdvisorPage() {
   const [dataSource,    setDataSource]    = useState<DataSource>("live");
   const [manualInput,   setManualInput]   = useState<ManualInput>(defaultManualInput);
 
+  // Live mode: values pre-filled from the latest sensor reading + current weather.
+  // Fields sensors can't measure (NPK, soil type) fall back to defaults for the
+  // user to review/edit. liveSeedKey forces the input panel to re-seed on refresh.
+  const [liveSeed,       setLiveSeed]       = useState<ManualInput>(defaultManualInput);
+  const [liveSensorKeys, setLiveSensorKeys] = useState<Array<keyof ManualInput>>([]);
+  const [liveSeedKey,    setLiveSeedKey]    = useState(0);
+  const [liveLoading,    setLiveLoading]    = useState(false);
+  const [liveNotice,     setLiveNotice]     = useState<string | null>(null);
+
   const uc = { low: T.accent, medium: T.amber, high: T.rose } as const;
+
+  // ── Pull live sensor + weather data and build a reviewable seed ──────────
+  const loadLiveData = async () => {
+    setLiveLoading(true); setLiveNotice(null);
+    const seed: ManualInput = { ...defaultManualInput };
+    const keys: Array<keyof ManualInput> = [];
+    let gotSensor = false;
+
+    try {
+      const r: any = await getLatestReading();
+      if (r?.temperature_c != null)     { seed.temperature = r.temperature_c; keys.push("temperature"); gotSensor = true; }
+      if (r?.humidity_pct != null)      { seed.humidity = r.humidity_pct; keys.push("humidity"); gotSensor = true; }
+      if (r?.soil_moisture_pct != null) { seed.soil_moisture = r.soil_moisture_pct; seed.moisture = r.soil_moisture_pct; keys.push("soil_moisture"); gotSensor = true; }
+      if (r?.ph_value != null)          { seed.ph = r.ph_value; keys.push("ph"); gotSensor = true; }
+    } catch { /* no live sensor reading yet */ }
+
+    try {
+      const w: any = await getCurrentWeather();
+      if (w?.rainfall_monthly_mm != null) { seed.rainfall = w.rainfall_monthly_mm; keys.push("rainfall"); }
+      if (!keys.includes("temperature") && w?.temperature_c != null) { seed.temperature = w.temperature_c; keys.push("temperature"); }
+      if (!keys.includes("humidity")    && w?.humidity_pct != null)  { seed.humidity = w.humidity_pct; keys.push("humidity"); }
+    } catch { /* weather unavailable */ }
+
+    setLiveSeed(seed);
+    setLiveSensorKeys(keys);
+    setManualInput(seed);
+    setLiveSeedKey(k => k + 1);
+    if (!gotSensor) {
+      setLiveNotice(lang === "en"
+        ? "No live sensor data available — values below use defaults. Please review before submitting."
+        : "लाइभ सेन्सर डेटा उपलब्ध छैन — तलका मानहरू पूर्वनिर्धारित छन्। पेस गर्नु अघि जाँच गर्नुहोस्।");
+    }
+    setLiveLoading(false);
+  };
+
+  // Fetch live data whenever the user is in Live mode (and on initial load).
+  useEffect(() => {
+    if (dataSource === "live") loadLiveData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataSource]);
 
   // ── Crop recommendation ──────────────────────────────────────
   const runCrop = async () => {
     setLoadingPanel("crop"); setError(null);
     setCropResult(null); setConfirmedCrop(null); setReport(null);
     try {
-      const body = dataSource === "manual"
-        ? {
-            nitrogen:    manualInput.nitrogen,
-            phosphorus:  manualInput.phosphorus,
-            potassium:   manualInput.potassium,
-            ph:          manualInput.ph,
-            temperature: manualInput.temperature,
-            humidity:    manualInput.humidity,
-            rainfall:    manualInput.rainfall,
-          }
-        : {};
+      const body = {
+        nitrogen:    manualInput.nitrogen,
+        phosphorus:  manualInput.phosphorus,
+        potassium:   manualInput.potassium,
+        ph:          manualInput.ph,
+        temperature: manualInput.temperature,
+        humidity:    manualInput.humidity,
+        rainfall:    manualInput.rainfall,
+      };
       const result = await postCropRecommendation(body);
       setCropResult(result);
     } catch (e: any) {
@@ -154,15 +202,13 @@ export default function AIAdvisorPage() {
   const runSoil = async () => {
     setLoadingPanel("soil"); setError(null); setSoilResult(null);
     try {
-      const body = dataSource === "manual"
-        ? {
-            nitrogen:   manualInput.nitrogen,
-            phosphorus: manualInput.phosphorus,
-            potassium:  manualInput.potassium,
-            ph:         manualInput.ph,
-            moisture:   manualInput.soil_moisture,
-          }
-        : {};
+      const body = {
+        nitrogen:   manualInput.nitrogen,
+        phosphorus: manualInput.phosphorus,
+        potassium:  manualInput.potassium,
+        ph:         manualInput.ph,
+        moisture:   manualInput.soil_moisture,
+      };
       const result = await postSoilFertility(body);
       setSoilResult(result);
     } catch (e: any) {
@@ -175,18 +221,16 @@ export default function AIAdvisorPage() {
   const runFert = async () => {
     setLoadingPanel("fert"); setError(null); setFertResult(null);
     try {
-      const body: any = dataSource === "manual"
-        ? {
-            nitrogen:    manualInput.nitrogen,
-            phosphorus:  manualInput.phosphorus,
-            potassium:   manualInput.potassium,
-            temperature: manualInput.temperature,
-            humidity:    manualInput.humidity,
-            moisture:    manualInput.soil_moisture,
-            soil_type:   manualInput.soil_type,
-            ph:          manualInput.ph,
-          }
-        : {};
+      const body: any = {
+        nitrogen:    manualInput.nitrogen,
+        phosphorus:  manualInput.phosphorus,
+        potassium:   manualInput.potassium,
+        temperature: manualInput.temperature,
+        humidity:    manualInput.humidity,
+        moisture:    manualInput.soil_moisture,
+        soil_type:   manualInput.soil_type,
+        ph:          manualInput.ph,
+      };
       body.crop_type = confirmedCrop ?? "General";
       const result = await postFertilizerRecommendation(body);
       setFertResult(result);
@@ -200,15 +244,13 @@ export default function AIAdvisorPage() {
   const runIrrig = async () => {
     setLoadingPanel("irrig"); setError(null); setIrrigResult(null);
     try {
-      const body: any = dataSource === "manual"
-        ? {
-            soil_moisture: manualInput.soil_moisture,
-            temperature:   manualInput.temperature,
-            humidity:      manualInput.humidity,
-            ph:            manualInput.ph,
-            rainfall_mm:   manualInput.rainfall,
-          }
-        : {};
+      const body: any = {
+        soil_moisture: manualInput.soil_moisture,
+        temperature:   manualInput.temperature,
+        humidity:      manualInput.humidity,
+        ph:            manualInput.ph,
+        rainfall_mm:   manualInput.rainfall,
+      };
       if (confirmedCrop) {
         body.crop_type  = confirmedCrop;
         body.crop_aware = true;
@@ -234,17 +276,16 @@ export default function AIAdvisorPage() {
         crop_confidence: cropResult.confidence,
         crop_top_3:      cropResult.top_3_crops,
       };
-      if (dataSource === "manual") {
-        body.nitrogen      = manualInput.nitrogen;
-        body.phosphorus    = manualInput.phosphorus;
-        body.potassium     = manualInput.potassium;
-        body.temperature   = manualInput.temperature;
-        body.humidity      = manualInput.humidity;
-        body.ph            = manualInput.ph;
-        body.rainfall      = manualInput.rainfall;
-        body.soil_moisture = manualInput.soil_moisture;
-        body.soil_type     = manualInput.soil_type;
-      }
+      // Always send the reviewed values (live-seeded or manual).
+      body.nitrogen      = manualInput.nitrogen;
+      body.phosphorus    = manualInput.phosphorus;
+      body.potassium     = manualInput.potassium;
+      body.temperature   = manualInput.temperature;
+      body.humidity      = manualInput.humidity;
+      body.ph            = manualInput.ph;
+      body.rainfall      = manualInput.rainfall;
+      body.soil_moisture = manualInput.soil_moisture;
+      body.soil_type     = manualInput.soil_type;
       const result = await postCompleteReport(body);
       setReport(result);
     } catch (e: any) {
@@ -471,7 +512,7 @@ export default function AIAdvisorPage() {
         <div style={{ fontSize: 11, fontWeight: 600, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>
           {t("Data Source", "डेटा स्रोत")}
         </div>
-        <div style={{ display: "flex", gap: 10, marginBottom: dataSource === "manual" ? 20 : 0 }}>
+        <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
           {(["live", "manual"] as const).map(src => (
             <button
               key={src}
@@ -493,14 +534,56 @@ export default function AIAdvisorPage() {
             </button>
           ))}
         </div>
-        {dataSource === "manual" && <ManualInputPanel lang={lang} onChange={setManualInput} />}
+
+        {dataSource === "manual" && (
+          <ManualInputPanel key="manual" lang={lang} onChange={setManualInput} />
+        )}
+
         {dataSource === "live" && (
-          <p style={{ fontSize: 12, color: T.textMuted, margin: 0 }}>
-            {t(
-              "Using live sensor + weather data. Switch to Manual Input if sensors are offline.",
-              "लाइभ सेन्सर र मौसम डेटा प्रयोग गर्दै। सेन्सर अफलाइन भएमा म्यानुअल इनपुटमा स्विच गर्नुहोस्।"
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
+              <p style={{ fontSize: 12, color: T.textMuted, margin: 0, maxWidth: 620 }}>
+                {t(
+                  "Pre-filled from live sensor + weather. Values sensors can't measure (NPK, soil type) use defaults — review and adjust them, then get your recommendation.",
+                  "लाइभ सेन्सर र मौसमबाट भरिएको। सेन्सरले नाप्न नसक्ने मानहरू (NPK, माटोको प्रकार) पूर्वनिर्धारित छन् — जाँच गरी मिलाउनुहोस्, त्यसपछि सिफारिस लिनुहोस्।"
+                )}
+              </p>
+              <button
+                onClick={loadLiveData}
+                disabled={liveLoading}
+                style={{
+                  padding: "8px 14px", borderRadius: 9,
+                  border: `1px solid ${T.border}`, background: T.surface,
+                  color: T.text, fontSize: 12, fontWeight: 600,
+                  cursor: liveLoading ? "default" : "pointer",
+                  display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap",
+                  opacity: liveLoading ? 0.6 : 1,
+                }}
+              >
+                <span style={liveLoading ? { animation: "spin 1s linear infinite", display: "inline-block" } : undefined}>⟳</span>
+                {t("Refresh from sensors", "सेन्सरबाट रिफ्रेस")}
+              </button>
+            </div>
+
+            {liveNotice && (
+              <div style={{
+                fontSize: 12, color: "#92400e", background: "#fffbeb",
+                border: "1px solid #fde68a", borderRadius: 10,
+                padding: "10px 14px", marginBottom: 12,
+              }}>
+                ⚠️ {liveNotice}
+              </div>
             )}
-          </p>
+
+            <ManualInputPanel
+              key={`live-${liveSeedKey}`}
+              lang={lang}
+              onChange={setManualInput}
+              seed={liveSeed}
+              sensorKeys={liveSensorKeys}
+              showPresets={false}
+            />
+          </div>
         )}
       </div>
 

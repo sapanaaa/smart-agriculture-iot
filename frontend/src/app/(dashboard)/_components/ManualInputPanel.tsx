@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { T, F } from "./DashboardComponents";
 import type { Lang } from "./LanguageToggle";
 
@@ -20,6 +20,12 @@ export interface ManualInput {
 interface Props {
   lang:     Lang;
   onChange: (data: ManualInput) => void;
+  /** Seed values to pre-fill the form with (e.g. live sensor + weather data). */
+  seed?: Partial<ManualInput>;
+  /** Field keys whose values came from live sensor/weather (shown with a 📡 badge). */
+  sensorKeys?: Array<keyof ManualInput>;
+  /** Show the Nepal scenario presets (hidden in Live mode). Default true. */
+  showPresets?: boolean;
 }
 
 const PRESETS: Array<{ label: string; label_np: string; emoji: string; data: ManualInput }> = [
@@ -69,9 +75,22 @@ export const defaultManualInput: ManualInput = {
   soil_type: "Loamy", crop_type: "Rice",
 };
 
-export default function ManualInputPanel({ lang, onChange }: Props) {
-  const [form, setForm]               = useState<ManualInput>(defaultManualInput);
+export default function ManualInputPanel({ lang, onChange, seed, sensorKeys, showPresets = true }: Props) {
+  const isLive  = Array.isArray(sensorKeys);
+  const liveSet = new Set<keyof ManualInput>(sensorKeys ?? []);
+  const initial = { ...defaultManualInput, ...(seed ?? {}) } as ManualInput;
+
+  const [form, setForm]                 = useState<ManualInput>(initial);
   const [activePreset, setActivePreset] = useState<number | null>(null);
+
+  // Push the (seeded) values up to the parent once on mount, so the user can
+  // submit without editing and still send the live/default values.
+  useEffect(() => {
+    onChange(initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const t = (en: string, np: string) => (lang === "en" ? en : np);
 
   const applyPreset = (idx: number) => {
     const d = PRESETS[idx].data;
@@ -87,39 +106,54 @@ export default function ManualInputPanel({ lang, onChange }: Props) {
     onChange(updated);
   };
 
+  // Small badge shown next to each field in Live mode.
+  const LiveBadge = () => (
+    <span style={{ marginLeft: 6, fontSize: 9, fontWeight: 700, color: "#15803d", background: "#dcfce7", borderRadius: 5, padding: "1px 5px", verticalAlign: "middle" }}>
+      📡 {t("live", "लाइभ")}
+    </span>
+  );
+  const ReviewBadge = () => (
+    <span style={{ marginLeft: 6, fontSize: 9, fontWeight: 700, color: "#b45309", background: "#fef3c7", borderRadius: 5, padding: "1px 5px", verticalAlign: "middle" }}>
+      ✎ {t("review", "जाँच")}
+    </span>
+  );
+
   return (
     <div style={{ padding: "20px 24px", background: T.surface, borderRadius: 16, border: `2px solid #2d6a2d40` }}>
-      {/* Presets */}
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 11, fontWeight: 600, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
-          {lang === "en" ? "Nepal Scenario Presets" : "नेपाल परिदृश्य"}
+      {/* Presets (manual mode only) */}
+      {showPresets && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+            {t("Nepal Scenario Presets", "नेपाल परिदृश्य")}
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {PRESETS.map((p, i) => (
+              <button
+                key={i}
+                onClick={() => applyPreset(i)}
+                style={{
+                  padding: "6px 12px", borderRadius: 8,
+                  border: `1.5px solid ${activePreset === i ? "#2d6a2d" : T.border}`,
+                  background: activePreset === i ? "#e8f4e8" : T.cardHover,
+                  color: activePreset === i ? "#2d6a2d" : T.textSub,
+                  fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.15s",
+                }}
+              >
+                {p.emoji} {t(p.label, p.label_np)}
+              </button>
+            ))}
+          </div>
         </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {PRESETS.map((p, i) => (
-            <button
-              key={i}
-              onClick={() => applyPreset(i)}
-              style={{
-                padding: "6px 12px", borderRadius: 8,
-                border: `1.5px solid ${activePreset === i ? "#2d6a2d" : T.border}`,
-                background: activePreset === i ? "#e8f4e8" : T.cardHover,
-                color: activePreset === i ? "#2d6a2d" : T.textSub,
-                fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.15s",
-              }}
-            >
-              {p.emoji} {lang === "en" ? p.label : p.label_np}
-            </button>
-          ))}
-        </div>
-      </div>
+      )}
 
       {/* Numeric fields */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 12, marginBottom: 14 }}>
         {FIELDS.map(f => (
           <div key={f.key}>
             <label style={{ fontSize: 11, color: T.textMuted, fontWeight: 500, display: "block", marginBottom: 4 }}>
-              {lang === "en" ? f.label : f.label_np}
+              {t(f.label, f.label_np)}
               {f.unit && <span style={{ color: T.textDim, marginLeft: 3 }}>({f.unit})</span>}
+              {isLive && (liveSet.has(f.key) ? <LiveBadge /> : <ReviewBadge />)}
             </label>
             <input
               type="number"
@@ -142,7 +176,8 @@ export default function ManualInputPanel({ lang, onChange }: Props) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <div>
           <label style={{ fontSize: 11, color: T.textMuted, fontWeight: 500, display: "block", marginBottom: 4 }}>
-            {lang === "en" ? "Soil Type" : "माटोको प्रकार"}
+            {t("Soil Type", "माटोको प्रकार")}
+            {isLive && <ReviewBadge />}
           </label>
           <select
             value={form.soil_type}
@@ -154,7 +189,7 @@ export default function ManualInputPanel({ lang, onChange }: Props) {
         </div>
         <div>
           <label style={{ fontSize: 11, color: T.textMuted, fontWeight: 500, display: "block", marginBottom: 4 }}>
-            {lang === "en" ? "Crop Type (hint)" : "बालीको प्रकार (संकेत)"}
+            {t("Crop Type (hint)", "बालीको प्रकार (संकेत)")}
           </label>
           <select
             value={form.crop_type}
