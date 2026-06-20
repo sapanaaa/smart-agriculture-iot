@@ -89,7 +89,9 @@ services:
       - "3000:3000"          # expose to host for local dev
     env_file: ./frontend/.env.local
     environment:
-      BACKEND: http://nodejs:5000         # server-side SSR calls
+      BACKEND: http://nodejs:5000         # server-side SSR calls (NextAuth authorize)
+      NODEJS_URL: http://nodejs:5000      # next.config rewrites → NodeJS upstream
+      FASTAPI_URL: http://fastapi:8000    # next.config rewrites → FastAPI upstream
     depends_on:
       nodejs:
         condition: service_healthy
