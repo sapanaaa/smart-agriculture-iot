@@ -71,11 +71,16 @@ tmp/
 models/saved/
 models/trained/
 
-# ML saved models folder (regenerate by running: python ml/train_models.py)
-backend/ml/saved_models/
+# ── Phase 10: ML artefacts ARE committed ─────────────────────
+# Trained models + training datasets are intentionally tracked so teammates can
+# run the project (and CI/CD can deploy to EC2) WITHOUT retraining locally.
+# Re-include them despite the generic *.joblib / *.pth / *.pkl ignores above.
+!backend/ml/saved_models/
+!backend/ml/saved_models/**
 
-# ML datasets — large CSV files, download from Kaggle or auto-generated
-backend/ml/datasets/
+# Datasets are tracked too — EXCEPT climate_data.csv: it is ~102 MB (over
+# GitHub's 100 MB hard per-file limit) and is unused by the training pipeline.
+backend/ml/datasets/climate_data.csv
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
@@ -169,6 +174,9 @@ coverage.xml
 # Documentation builds
 site/
 .claude/
+
+# ── Kiro AI assistant (local workspace — never commit) ────────
+.kiro/
 
 # Backup files
 *.bak
