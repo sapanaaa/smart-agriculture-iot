@@ -17,7 +17,19 @@ async function request(path, options = {}) {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(err.detail || `HTTP ${res.status}`);
+    // FastAPI validation errors return detail as an array of {loc,msg,type}.
+    // Flatten it into a readable string instead of "[object Object]".
+    let message;
+    if (Array.isArray(err?.detail)) {
+      message = err.detail
+        .map((e) => (e?.msg ? `${e.msg}${e.loc ? ` (${e.loc.join(".")})` : ""}` : JSON.stringify(e)))
+        .join("; ");
+    } else if (typeof err?.detail === "string") {
+      message = err.detail;
+    } else {
+      message = err?.detail ? JSON.stringify(err.detail) : `HTTP ${res.status}`;
+    }
+    throw new Error(message);
   }
   return res.json();
 }

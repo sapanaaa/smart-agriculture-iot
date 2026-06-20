@@ -37,10 +37,12 @@ class CropRecommendationRequest(BaseModel):
     NPK values can be provided manually or fetched from sensor (future NPK sensor).
     Weather fields are auto-filled from WeatherService if not provided.
     """
-    nitrogen:    float = Field(..., ge=0,  le=200, description="Nitrogen (kg/ha)")
-    phosphorus:  float = Field(..., ge=0,  le=200, description="Phosphorus (kg/ha)")
-    potassium:   float = Field(..., ge=0,  le=200, description="Potassium (kg/ha)")
-    ph:          float = Field(..., ge=0,  le=14,  description="Soil pH")
+    # All optional — auto-filled from live sensors / weather / NPK defaults
+    # when omitted (Live Sensor mode sends an empty body). Manual mode supplies them.
+    nitrogen:    Optional[float] = Field(None, ge=0,  le=200, description="Nitrogen (kg/ha)")
+    phosphorus:  Optional[float] = Field(None, ge=0,  le=200, description="Phosphorus (kg/ha)")
+    potassium:   Optional[float] = Field(None, ge=0,  le=200, description="Potassium (kg/ha)")
+    ph:          Optional[float] = Field(None, ge=0,  le=14,  description="Soil pH")
 
     # Optional — auto-filled from live sensors/weather if omitted
     temperature: Optional[float] = Field(None, ge=-10, le=60)
@@ -60,11 +62,13 @@ class CropRecommendationRequest(BaseModel):
 
 class FertilizerRecommendationRequest(BaseModel):
     """Input for fertilizer recommendation."""
-    nitrogen:    float = Field(..., ge=0, le=200)
-    phosphorus:  float = Field(..., ge=0, le=200)
-    potassium:   float = Field(..., ge=0, le=200)
-    soil_type:   str   = Field(..., description="Sandy | Loamy | Black | Red | Clayey")
-    crop_type:   str   = Field(..., description="e.g. Wheat, Rice, Maize, Cotton")
+    # Optional — auto-filled with sensible defaults in Live Sensor mode
+    # (no NPK sensor yet). Manual mode supplies real values.
+    nitrogen:    Optional[float] = Field(None, ge=0, le=200)
+    phosphorus:  Optional[float] = Field(None, ge=0, le=200)
+    potassium:   Optional[float] = Field(None, ge=0, le=200)
+    soil_type:   Optional[str]   = Field("Loamy", description="Sandy | Loamy | Black | Red | Clayey")
+    crop_type:   Optional[str]   = Field("Wheat", description="e.g. Wheat, Rice, Maize, Cotton")
 
     # Auto-filled from live sensors if omitted
     temperature: Optional[float] = Field(None, ge=-10, le=60)

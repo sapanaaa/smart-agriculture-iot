@@ -275,13 +275,22 @@ async def recommend_crop(request: CropRecommendationRequest):
     if rainfall is None:
         rainfall = weather.rainfall_monthly_mm if weather else 100.0
 
+    # NPK + pH: auto-fill in Live Sensor mode (empty body). No NPK sensor yet,
+    # so use the same moderate defaults the /full endpoint uses; pH from sensor.
+    nitrogen   = request.nitrogen   if request.nitrogen   is not None else 60.0
+    phosphorus = request.phosphorus if request.phosphorus is not None else 40.0
+    potassium  = request.potassium  if request.potassium  is not None else 40.0
+    ph         = request.ph if request.ph is not None else (
+        (latest.ph_value if latest and latest.ph_value is not None else 6.5)
+    )
+
     result = ml_service.predict_crop(
-        nitrogen    = request.nitrogen,
-        phosphorus  = request.phosphorus,
-        potassium   = request.potassium,
+        nitrogen    = nitrogen,
+        phosphorus  = phosphorus,
+        potassium   = potassium,
         temperature = temperature,
         humidity    = humidity,
-        ph          = request.ph,
+        ph          = ph,
         rainfall    = rainfall,
     )
 
@@ -318,15 +327,22 @@ async def recommend_fertilizer(request: FertilizerRecommendationRequest):
         latest.soil_moisture_pct if latest else 50.0
     )
 
+    # NPK + soil/crop type: auto-fill in Live Sensor mode (no NPK sensor yet).
+    nitrogen   = request.nitrogen   if request.nitrogen   is not None else 60.0
+    phosphorus = request.phosphorus if request.phosphorus is not None else 40.0
+    potassium  = request.potassium  if request.potassium  is not None else 40.0
+    soil_type  = request.soil_type or "Loamy"
+    crop_type  = request.crop_type or "Wheat"
+
     result = ml_service.predict_fertilizer(
         temperature = temperature,
         humidity    = humidity,
         moisture    = moisture,
-        soil_type   = request.soil_type,
-        crop_type   = request.crop_type,
-        nitrogen    = request.nitrogen,
-        potassium   = request.potassium,
-        phosphorus  = request.phosphorus,
+        soil_type   = soil_type,
+        crop_type   = crop_type,
+        nitrogen    = nitrogen,
+        potassium   = potassium,
+        phosphorus  = phosphorus,
     )
 
     if result is None:
