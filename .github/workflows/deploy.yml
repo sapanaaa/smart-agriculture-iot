@@ -71,6 +71,17 @@ jobs:
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@$EC2_HOST \
             "sudo mkdir -p /home/ubuntu/app/backend/ml/saved_models && sudo chown -R ubuntu:ubuntu /home/ubuntu/app"
 
+      - name: Free host ports 80/443 for dockerized nginx
+        env:
+          EC2_HOST: ${{ steps.ec2_ip.outputs.public_ip }}
+        run: |
+          # This app is served by the nginx CONTAINER (binds 80/443). A leftover
+          # host nginx/apache service can grab those ports and block the
+          # container from starting ("address already in use"). Stop+disable any
+          # host web server so the dockerized nginx can always bind.
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@$EC2_HOST \
+            "sudo systemctl stop nginx apache2 2>/dev/null || true; sudo systemctl disable nginx apache2 2>/dev/null || true"
+
       - name: Deploy application to EC2
         env:
           EC2_HOST: ${{ steps.ec2_ip.outputs.public_ip }}
