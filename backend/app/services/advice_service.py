@@ -7,10 +7,44 @@
 
 import logging
 import os
+import re
 from typing import Optional
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
+
+# Hard cap on how long a single Gemini generate_content call may run (ms).
+# Prevents a hung upstream request from tying up a worker thread forever.
+_GEMINI_TIMEOUT_MS = 30_000
+
+# Unique sentinel markers used to request both languages in ONE Gemini call
+# and split them back apart afterwards. Chosen so they never occur in advice.
+_EN_MARKER = "<<<ENGLISH>>>"
+_NP_MARKER = "<<<NEPALI>>>"
+
+
+def _split_bilingual(text: str) -> tuple[Optional[str], Optional[str]]:
+    """
+    Split a single bilingual Gemini response into (english, nepali).
+
+    The model is asked to format its reply as:
+        <<<ENGLISH>>> ... <<<NEPALI>>> ...
+    The regex is tolerant of surrounding whitespace, case and stray markdown
+    around the markers. Returns (None, None) if the expected structure is
+    missing so the caller can fall back to offline templates.
+    """
+    if not text:
+        return None, None
+    m = re.search(
+        r"<<<\s*ENGLISH\s*>>>(.*?)<<<\s*NEPALI\s*>>>(.*)",
+        text,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+    if not m:
+        return None, None
+    en = m.group(1).strip().strip("*").strip()
+    np_text = m.group(2).strip().strip("*").strip()
+    return (en or None), (np_text or None)
 
 
 def _get_model() -> str:
@@ -45,24 +79,54 @@ def _get_api_key() -> Optional[str]:
 
 
 def _call_gemini(prompt_en: str, prompt_np: str) -> Optional[tuple[str, str]]:
-    """Call Gemini Flash API. Returns (english, nepali) text or None on failure."""
+    """Call Gemini Flash API. Returns (english, nepali) text or None on failure.
+
+    Both languages are requested in a SINGLE generate_content call (instead of
+    two) to halve API usage — important on the free tier (5 req/min, 20/day).
+    The two prompts are preserved verbatim, so output quality is unchanged; the
+    response is split back into the two languages via sentinel markers.
+    """
     api_key = _get_api_key()
     if not api_key:
         logger.info("[Advice] No GEMINI_API_KEY configured, using templates.")
         return None
     try:
         from google import genai
-        client = genai.Client(api_key=api_key)
+
+        # Apply a per-request timeout when the installed SDK supports it.
+        try:
+            from google.genai import types
+            client = genai.Client(
+                api_key=api_key,
+                http_options=types.HttpOptions(timeout=_GEMINI_TIMEOUT_MS),
+            )
+        except Exception:
+            client = genai.Client(api_key=api_key)
 
         model = _get_model()
-        resp_en = client.models.generate_content(model=model, contents=prompt_en)
-        resp_np = client.models.generate_content(model=model, contents=prompt_np)
 
-        en = (resp_en.text or "").strip()
-        np_text = (resp_np.text or "").strip()
+        # One call produces BOTH versions. The original per-language
+        # instructions are embedded unchanged to keep results identical.
+        combined_prompt = (
+            "You will write the SAME agricultural advice in two languages: "
+            "first English, then Nepali. Output ONLY the two sections below, "
+            "each preceded by its exact marker on its own line, with nothing "
+            "else before, between, or after them:\n\n"
+            f"{_EN_MARKER}\n<your English advice here>\n"
+            f"{_NP_MARKER}\n<your Nepali advice here>\n\n"
+            "=== ENGLISH SECTION INSTRUCTIONS ===\n"
+            f"{prompt_en}\n\n"
+            "=== NEPALI SECTION INSTRUCTIONS ===\n"
+            f"{prompt_np}"
+        )
+
+        resp = client.models.generate_content(model=model, contents=combined_prompt)
+        en, np_text = _split_bilingual(resp.text or "")
 
         if en and np_text:
             return en, np_text
+        # Structure unexpected — treat as failure so we fall back to templates.
+        logger.warning("[Advice] Gemini reply missing bilingual markers; using templates.")
         return None
     except Exception as e:
         logger.warning(f"[Advice] Gemini API failed: {e}. Falling back to templates.")

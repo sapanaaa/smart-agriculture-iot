@@ -146,7 +146,10 @@ class SoilFertilityRequest(BaseModel):
     nitrogen:   float          = Field(60.0, ge=0,   le=200, description="Nitrogen (kg/ha)")
     phosphorus: float          = Field(40.0, ge=0,   le=150, description="Phosphorus (kg/ha)")
     potassium:  float          = Field(40.0, ge=0,   le=250, description="Potassium (kg/ha)")
-    ph:         float          = Field(6.5,  ge=3.5, le=9.0, description="Soil pH")
+    # Accept the full 0-14 pH scale (consistent with crop/irrigation requests).
+    # Raw/uncalibrated sensors can report values outside the typical soil range
+    # (3.5-9); rejecting them with a 422 would break the whole report flow.
+    ph:         float          = Field(6.5,  ge=0,   le=14,  description="Soil pH")
     moisture:   Optional[float] = Field(None, ge=0,  le=100, description="Soil moisture %. Auto-filled from sensor if None.")
     explain:    bool            = Field(False, description="Include LIME feature importance explanation")
 
@@ -207,7 +210,9 @@ class CompleteReportRequest(BaseModel):
     potassium:        Optional[float] = Field(None, ge=0,   le=250)
     temperature:      Optional[float] = Field(None, ge=-10, le=60)
     humidity:         Optional[float] = Field(None, ge=0,   le=100)
-    ph:               Optional[float] = Field(None, ge=3.5, le=9.0)
+    # Full 0-14 pH scale — consistent with the other recommendation requests
+    # so live (possibly uncalibrated) sensor pH never 422s the report.
+    ph:               Optional[float] = Field(None, ge=0,   le=14)
     rainfall:         Optional[float] = Field(None, ge=0,   le=500)
     soil_moisture:    Optional[float] = Field(None, ge=0,   le=100)
     soil_type:        Optional[str]   = "Loamy"

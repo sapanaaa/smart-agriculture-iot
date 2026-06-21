@@ -14,6 +14,7 @@
 #   POST /api/recommend/explain       → LIME XAI explanation
 # =============================================================
 
+import asyncio
 import logging
 from fastapi import APIRouter, HTTPException
 from typing import Optional
@@ -538,35 +539,47 @@ async def generate_complete_report(request: CompleteReportRequest):
     soil_fmt  = _format_soil(soil_result)
 
     # ── 3. Fetch bilingual Gemini advice for all 4 sections ──────
-    crop_advice = get_crop_advice(
-        crop       = confirmed_crop,
-        confidence = request.crop_confidence or 0.0,
-        nitrogen   = nitrogen,  phosphorus = phosphorus,
-        potassium  = potassium, temperature = temperature,
-        humidity   = humidity,  ph = ph, rainfall = rainfall,
-    )
-    fert_advice = get_fertilizer_advice(
-        fertilizer = fert_result.fertilizer,
-        confidence = fert_result.confidence,
-        nitrogen   = nitrogen, phosphorus = phosphorus,
-        potassium  = potassium,
-        crop_type  = confirmed_crop,
-        soil_type  = soil_type,
-    )
+    # Each helper makes blocking Gemini HTTP calls. Run them in worker
+    # threads concurrently via asyncio.gather so the single-worker event
+    # loop stays free to serve other requests (sensors, health, weather)
+    # while the report is being generated. This turns ~8 sequential
+    # network calls (~60-100s, during which the whole API froze) into
+    # roughly one call's worth of latency without blocking the loop.
     _urgency_to_class = {"low": 1, "medium": 2, "high": 3, "critical": 4}
-    irrig_advice = get_irrigation_advice(
-        irrigation_class = _urgency_to_class.get(irrig_result.urgency, 1),
-        action           = irrig_result.action,
-        confidence       = irrig_result.confidence,
-        soil_moisture    = soil_moisture,
-        temperature      = temperature,
-        crop_type        = confirmed_crop,
-    )
-    soil_advice = get_soil_advice(
-        fertility_class = soil_result.fertility_class,
-        confidence      = soil_result.confidence,
-        nitrogen        = nitrogen, phosphorus = phosphorus,
-        potassium       = potassium, ph = ph, moisture = soil_moisture,
+    crop_advice, fert_advice, irrig_advice, soil_advice = await asyncio.gather(
+        asyncio.to_thread(
+            get_crop_advice,
+            crop        = confirmed_crop,
+            confidence  = request.crop_confidence or 0.0,
+            nitrogen    = nitrogen,  phosphorus = phosphorus,
+            potassium   = potassium, temperature = temperature,
+            humidity    = humidity,  ph = ph, rainfall = rainfall,
+        ),
+        asyncio.to_thread(
+            get_fertilizer_advice,
+            fertilizer = fert_result.fertilizer,
+            confidence = fert_result.confidence,
+            nitrogen   = nitrogen, phosphorus = phosphorus,
+            potassium  = potassium,
+            crop_type  = confirmed_crop,
+            soil_type  = soil_type,
+        ),
+        asyncio.to_thread(
+            get_irrigation_advice,
+            irrigation_class = _urgency_to_class.get(irrig_result.urgency, 1),
+            action           = irrig_result.action,
+            confidence       = irrig_result.confidence,
+            soil_moisture    = soil_moisture,
+            temperature      = temperature,
+            crop_type        = confirmed_crop,
+        ),
+        asyncio.to_thread(
+            get_soil_advice,
+            fertility_class = soil_result.fertility_class,
+            confidence      = soil_result.confidence,
+            nitrogen        = nitrogen, phosphorus = phosphorus,
+            potassium       = potassium, ph = ph, moisture = soil_moisture,
+        ),
     )
 
     advice_bundle = {
@@ -712,7 +725,8 @@ async def get_advice(request: AdviceRequest):
     if t == "crop":
         if not request.crop:
             raise HTTPException(400, "crop field is required for crop advice")
-        result = get_crop_advice(
+        result = await asyncio.to_thread(
+            get_crop_advice,
             crop=request.crop,
             confidence=request.confidence or 0.0,
             nitrogen=request.nitrogen, phosphorus=request.phosphorus,
@@ -723,7 +737,8 @@ async def get_advice(request: AdviceRequest):
     elif t == "fertilizer":
         if not request.fertilizer:
             raise HTTPException(400, "fertilizer field is required")
-        result = get_fertilizer_advice(
+        result = await asyncio.to_thread(
+            get_fertilizer_advice,
             fertilizer=request.fertilizer,
             confidence=request.confidence or 0.0,
             nitrogen=request.nitrogen, phosphorus=request.phosphorus,
@@ -732,7 +747,8 @@ async def get_advice(request: AdviceRequest):
         )
 
     elif t == "irrigation":
-        result = get_irrigation_advice(
+        result = await asyncio.to_thread(
+            get_irrigation_advice,
             irrigation_class=request.irrigation_class or 1,
             action=request.irrigation_action or "Irrigation Recommended",
             confidence=request.confidence or 0.0,
@@ -744,7 +760,8 @@ async def get_advice(request: AdviceRequest):
     elif t == "soil":
         if not request.fertility_class:
             raise HTTPException(400, "fertility_class field is required")
-        result = get_soil_advice(
+        result = await asyncio.to_thread(
+            get_soil_advice,
             fertility_class=request.fertility_class,
             confidence=request.confidence or 0.0,
             nitrogen=request.nitrogen, phosphorus=request.phosphorus,
