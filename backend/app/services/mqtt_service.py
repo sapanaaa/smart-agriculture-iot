@@ -166,6 +166,14 @@ class MQTTService:
         self._client.on_message    = _on_message
         self._client.on_disconnect = _on_disconnect
 
+        # Authenticate when broker credentials are configured.
+        if settings.MQTT_USERNAME:
+            self._client.username_pw_set(
+                settings.MQTT_USERNAME,
+                settings.MQTT_PASSWORD or None,
+            )
+            logger.info(f"[MQTT] Using credentials for user '{settings.MQTT_USERNAME}'.")
+
         try:
             self._client.connect(
                 host      = settings.MQTT_BROKER_HOST,

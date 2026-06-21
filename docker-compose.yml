@@ -15,13 +15,26 @@ services:
     restart: unless-stopped
     ports:
       - "1883:1883"          # always exposed — ESP32 hardware on LAN needs this
+    env_file: ./backend/.env   # provides MQTT_USERNAME / MQTT_PASSWORD (shared with fastapi)
+    # Generate the password file from env at startup (so no hashed secret is
+    # committed), then start the broker. $$ escapes to $ for the container shell.
+    command:
+      - /bin/sh
+      - -c
+      - >-
+        if [ -n "$$MQTT_USERNAME" ]; then
+        mosquitto_passwd -b -c /mosquitto/config/passwd "$$MQTT_USERNAME" "$$MQTT_PASSWORD" &&
+        chmod 0700 /mosquitto/config/passwd &&
+        chown mosquitto:mosquitto /mosquitto/config/passwd;
+        fi;
+        exec /usr/sbin/mosquitto -c /mosquitto/config/mosquitto.conf
     volumes:
       - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - mosquitto_data:/mosquitto/data
       - mosquitto_log:/mosquitto/log
     healthcheck:
-      test: ["CMD", "mosquitto_pub", "-h", "localhost", "-p", "1883",
-             "-t", "health/check", "-m", "ping", "-q", "0"]
+      test: ["CMD-SHELL",
+             "mosquitto_pub -h localhost -p 1883 -u $$MQTT_USERNAME -P $$MQTT_PASSWORD -t health/check -m ping -q 0"]
       interval: 30s
       timeout: 10s
       retries: 3

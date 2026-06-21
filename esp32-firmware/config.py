@@ -10,12 +10,16 @@ WIFI_PASSWORD = "#include(conio.h)"
 WIFI_TIMEOUT  = 15          # seconds to wait for connection
 
 # ── MQTT Broker ───────────────────────────────────────────────
-MQTT_BROKER   = "192.168.18.32"   # IP of your PC running broker
+# Production: the EC2 Elastic IP (stable). For local testing, swap this
+# for your PC's LAN IP running the broker.
+MQTT_BROKER   = "13.235.169.146"   # EC2 Elastic IP
 MQTT_PORT     = 1883
 MQTT_CLIENT_ID = "esp32_farm_01"
 MQTT_TOPIC    = "smart_agriculture/sensor_data"
-MQTT_USERNAME = ""                # leave empty if no auth
-MQTT_PASSWORD = ""
+# Broker authentication — must match MQTT_USERNAME / MQTT_PASSWORD in the
+# server's backend/.env (and the BACKEND_ENV GitHub secret used for deploy).
+MQTT_USERNAME = "agrisense_esp32"
+MQTT_PASSWORD = "AgriSense_ESP32_2026"
 
 # ── Sensor Pin Mapping (ESP32 GPIO) ───────────────────────────
 # DHT22 — Digital sensor, single data wire

@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     MQTT_BROKER_PORT:       int = 1883
     MQTT_TOPIC_SENSOR_DATA: str = "smart_agriculture/sensor_data"
     MQTT_CLIENT_ID:         str = "fastapi_backend_01"
+    # Broker authentication. Leave both blank for an anonymous broker
+    # (local dev only). In production these are set via env / secrets.
+    MQTT_USERNAME:          str = ""
+    MQTT_PASSWORD:          str = ""
 
     # ── MongoDB Atlas ─────────────────────────────────────────
     # Local fallback:  mongodb://localhost:27017
