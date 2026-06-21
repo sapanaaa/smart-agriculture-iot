@@ -36,7 +36,7 @@ shap==0.46.0                   # SHAP global feature importance
 
 # ── Phase 9: Gemini AI, PDF generation, class-imbalance correction ──
 google-genai>=1.0.0               # Gen AI SDK — advice_service uses `from google import genai` + genai.Client()
-xhtml2pdf==0.2.16                 # Pure-Python PDF (no GTK+, Windows-compatible)
+weasyprint>=60                    # Professional PDF via Pango+HarfBuzz (correct Devanagari shaping)
 imbalanced-learn>=0.12.0          # SMOTE for class-imbalance in ML training
 jinja2>=3.1.0                     # HTML template rendering for PDF reports
 

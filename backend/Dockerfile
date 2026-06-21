@@ -24,9 +24,18 @@ RUN pip install --no-cache-dir -r requirements.txt \
 # ── Stage 2: minimal runtime image ────────────────────────────
 FROM python:3.13-slim AS runtime
 
-# Runtime shared library for pycairo / reportlab
+# Runtime shared libraries.
+#  - libcairo2: legacy (kept harmless)
+#  - libpango / libpangoft2 / libgdk-pixbuf: WeasyPrint rendering (Pango+HarfBuzz
+#    gives CORRECT Devanagari shaping for Nepali advice)
+#  - fonts-noto-core: Noto Sans (Latin) + Noto Sans Devanagari (Nepali) glyphs
+#    so the PDF never falls back to "tofu" boxes
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libcairo2 \
+    libpango-1.0-0 \
+    libpangoft2-1.0-0 \
+    libgdk-pixbuf-2.0-0 \
+    fonts-noto-core \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /venv /venv

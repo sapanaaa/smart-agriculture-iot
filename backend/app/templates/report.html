@@ -1,385 +1,409 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <title>SmartAgri Farm Report — {{ report_id }}</title>
-  <style>
-    /* Base */
-    @page {
-      size: A4;
-      margin: 18mm 15mm 18mm 15mm;
-      @frame header_frame {
-        -pdf-frame-content: header_content;
-        top: 10mm; left: 15mm; right: 15mm; height: 14mm;
-      }
-      @frame footer_frame {
-        -pdf-frame-content: footer_content;
-        bottom: 8mm; left: 15mm; right: 15mm; height: 9mm;
-      }
+<meta charset="UTF-8"/>
+<title>SmartAgri Farm Report — {{ report_id }}</title>
+<style>
+  /* ════════════════ Page setup (WeasyPrint) ════════════════ */
+  @page {
+    size: A4;
+    margin: 26mm 14mm 18mm 14mm;
+    @top-left  { content: element(pageHeader); width: 100%; }
+    @bottom-left {
+      content: "Report ID: {{ report_id }}  ·  Generated: {{ generated_at }}";
+      font-family: "Noto Sans", sans-serif; font-size: 7pt; color: #9aa0a6;
     }
+    @bottom-right {
+      content: "Page " counter(page) " of " counter(pages);
+      font-family: "Noto Sans", sans-serif; font-size: 7pt; color: #9aa0a6;
+    }
+  }
 
-    body {
-      font-family: Arial, sans-serif;
-      font-size: 9.5pt;
-      color: #1a1a1a;
-      line-height: 1.45;
-    }
+  * { box-sizing: border-box; }
 
-    /* ── Header ── */
-    #header_content {
-      border-bottom: 2px solid #2d6a2d;
-      padding-bottom: 3px;
-    }
-    .header-logo {
-      font-size: 14pt;
-      font-weight: bold;
-      color: #2d6a2d;
-      display: inline-block;
-    }
-    .header-subtitle {
-      font-size: 8pt;
-      color: #666;
-      float: right;
-      margin-top: 4px;
-    }
+  body {
+    font-family: "Noto Sans", "Noto Sans Devanagari", sans-serif;
+    font-size: 9.3pt;
+    color: #20242a;
+    line-height: 1.5;
+    margin: 0;
+  }
+  .np { font-family: "Noto Sans Devanagari", "Noto Sans", sans-serif; }
 
-    /* ── Footer ── */
-    #footer_content {
-      border-top: 1px solid #ccc;
-      font-size: 7.5pt;
-      color: #888;
-      padding-top: 2px;
-    }
-    .footer-left  { float: left; }
-    .footer-right { float: right; }
+  b, strong { font-weight: 700; }
 
-    /* ── Cover Banner ── */
-    .cover-banner {
-      background: linear-gradient(135deg, #2d6a2d 0%, #4a9e4a 50%, #d4a017 100%);
-      color: white;
-      padding: 12px 16px;
-      margin-bottom: 14px;
-      border-radius: 4px;
-    }
-    .cover-banner h1 {
-      margin: 0 0 2px 0;
-      font-size: 16pt;
-      letter-spacing: 1px;
-    }
-    .cover-banner .sub {
-      font-size: 9pt;
-      opacity: 0.88;
-    }
+  /* ════════════════ Running header ════════════════ */
+  .page-header {
+    position: running(pageHeader);
+    border-bottom: 1.5pt solid #2d6a2d;
+    padding-bottom: 4px;
+    width: 100%;
+  }
+  .page-header table { width: 100%; border-collapse: collapse; }
+  .page-header .brand { font-size: 12pt; font-weight: 700; color: #2d6a2d; vertical-align: middle; }
+  .page-header .brand svg { vertical-align: middle; margin-right: 4px; }
+  .page-header .tagline { font-size: 7.5pt; color: #777; text-align: right; vertical-align: middle; }
 
-    /* ── Farmer Info Table ── */
-    .info-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 14px;
-      font-size: 9pt;
-    }
-    .info-table td {
-      padding: 4px 8px;
-      border: 1px solid #ddd;
-    }
-    .info-table td:first-child {
-      font-weight: bold;
-      color: #555;
-      background: #f5f5f5;
-      width: 30%;
-    }
+  /* ════════════════ Cover banner ════════════════ */
+  .cover {
+    background: linear-gradient(120deg, #1f5a1f 0%, #2d6a2d 45%, #4a9e4a 100%);
+    color: #fff;
+    padding: 16px 20px;
+    border-radius: 6px;
+    margin-bottom: 14px;
+  }
+  .cover h1 { margin: 0; font-size: 18pt; letter-spacing: 0.4px; }
+  .cover .sub { font-size: 9.5pt; opacity: 0.92; margin-top: 3px; }
+  .cover .sub-np { font-size: 9pt; opacity: 0.92; margin-top: 1px; }
 
-    /* ── Section Headers ── */
-    .section-header {
-      background-color: #2d6a2d;
-      color: white;
-      padding: 5px 10px;
-      font-size: 10.5pt;
-      font-weight: bold;
-      margin-top: 14px;
-      margin-bottom: 8px;
-      border-radius: 2px;
-    }
-    .section-header-np {
-      font-size: 9pt;
-      opacity: 0.85;
-      font-weight: normal;
-    }
+  /* ════════════════ Section headers ════════════════ */
+  .section {
+    display: flex;
+    align-items: center;
+    background: #eef5ee;
+    border-left: 4px solid #2d6a2d;
+    padding: 6px 10px;
+    margin: 16px 0 9px 0;
+    border-radius: 0 4px 4px 0;
+  }
+  .section svg { margin-right: 8px; flex-shrink: 0; }
+  .section .t-en { font-size: 11pt; font-weight: 700; color: #1f5a1f; }
+  .section .t-np { font-size: 9pt; color: #4a7a4a; margin-left: 8px; }
 
-    /* ── Recommendation Cards ── */
-    .rec-card {
-      border: 1px solid #dce8dc;
-      border-left: 4px solid #2d6a2d;
-      padding: 8px 10px;
-      margin-bottom: 10px;
-      background: #fafffe;
-      border-radius: 2px;
-    }
-    .rec-card .rec-title {
-      font-weight: bold;
-      font-size: 10.5pt;
-      color: #2d6a2d;
-      margin-bottom: 3px;
-    }
-    .rec-card .rec-conf {
-      font-size: 8pt;
-      color: #888;
-      float: right;
-    }
-    .rec-card .rec-body {
-      font-size: 9pt;
-      color: #222;
-    }
-    .rec-card .rec-body-np {
-      font-size: 9pt;
-      color: #444;
-      border-top: 1px dashed #ccc;
-      margin-top: 5px;
-      padding-top: 5px;
-    }
+  /* ════════════════ Summary box ════════════════ */
+  .summary {
+    background: #f6fbf6;
+    border: 1px solid #cfe6cf;
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin-bottom: 6px;
+  }
+  .summary .lead {
+    display: flex; align-items: center;
+    font-size: 10.5pt; font-weight: 700; color: #1f5a1f; margin-bottom: 6px;
+  }
+  .summary .lead svg { margin-right: 7px; }
+  .summary p { margin: 4px 0; font-size: 9.4pt; }
+  .summary .en { color: #20242a; }
+  .summary .np { color: #3c4450; border-top: 1px dashed #cfe6cf; padding-top: 6px; margin-top: 6px; }
 
-    /* ── Soil Data Mini-Table ── */
-    .soil-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 8.5pt;
-      margin-top: 4px;
-    }
-    .soil-table th {
-      background: #e8f4e8;
-      padding: 3px 6px;
-      border: 1px solid #c5dcc5;
-      text-align: center;
-      font-size: 8pt;
-    }
-    .soil-table td {
-      padding: 3px 6px;
-      border: 1px solid #ddd;
-      text-align: center;
-    }
+  /* ════════════════ Info table ════════════════ */
+  .info { width: 100%; border-collapse: collapse; margin-bottom: 4px; font-size: 9pt; }
+  .info td { padding: 5px 9px; border: 1px solid #e3e6ea; }
+  .info td.k { font-weight: 700; color: #555; background: #f6f7f8; width: 22%; }
 
-    /* ── Advice Box ── */
-    .advice-box {
-      background: #fffbf0;
-      border: 1px solid #d4a017;
-      border-left: 4px solid #d4a017;
-      padding: 8px 10px;
-      margin-top: 12px;
-      border-radius: 2px;
-    }
-    .advice-box .advice-title {
-      font-weight: bold;
-      font-size: 10pt;
-      color: #9a7212;
-      margin-bottom: 4px;
-    }
-    .advice-en { font-size: 9pt; color: #222; margin-bottom: 6px; }
-    .advice-np { font-size: 9pt; color: #444; border-top: 1px dashed #e0c060; padding-top: 5px; }
+  /* ════════════════ Readings (blood-report style) ════════════════ */
+  .readings { width: 100%; border-collapse: collapse; font-size: 8.6pt; }
+  .readings th {
+    background: #2d6a2d; color: #fff; padding: 6px 8px; text-align: left;
+    font-size: 8.2pt; font-weight: 700;
+  }
+  .readings th:nth-child(2), .readings th:nth-child(3), .readings th:nth-child(4) { text-align: center; }
+  .readings td { padding: 6px 8px; border-bottom: 1px solid #e8ebee; vertical-align: top; }
+  .readings tr:nth-child(even) td { background: #fafbfa; }
+  .readings .param { font-weight: 700; color: #20242a; }
+  .readings .param .sub { display: block; font-weight: 400; font-size: 7.6pt; color: #8a9099; }
+  .readings .val { text-align: center; font-weight: 700; font-size: 9.5pt; }
+  .readings .range { text-align: center; color: #6b7178; white-space: nowrap; }
+  .readings .msg { font-size: 8.2pt; color: #4a5159; }
+  .readings .msg .np { display: block; color: #6b7178; margin-top: 2px; }
 
-    /* ── Disclaimer ── */
-    .disclaimer {
-      font-size: 7.5pt;
-      color: #999;
-      border-top: 1px solid #eee;
-      margin-top: 16px;
-      padding-top: 6px;
-      text-align: center;
-    }
+  .pill {
+    display: inline-block; padding: 2px 8px; border-radius: 9px;
+    font-size: 7.6pt; font-weight: 700; white-space: nowrap; text-align: center;
+  }
+  .pill.optimal { background: #d8f3dc; color: #1b5e2a; }
+  .pill.low     { background: #fde8cf; color: #8a4b08; }
+  .pill.high    { background: #fde0e0; color: #8a1c1c; }
+  .pill.na      { background: #eceef0; color: #8a9099; }
 
-    /* ── Chip badges ── */
-    .badge {
-      display: inline-block;
-      padding: 1px 6px;
-      border-radius: 8px;
-      font-size: 7.5pt;
-      font-weight: bold;
-    }
-    .badge-green  { background: #d1fae5; color: #065f46; }
-    .badge-yellow { background: #fef3c7; color: #92400e; }
-    .badge-red    { background: #fee2e2; color: #7f1d1d; }
-    .badge-blue   { background: #dbeafe; color: #1e3a8a; }
+  /* ════════════════ Recommendation cards ════════════════ */
+  .recs { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+  .rec {
+    border: 1px solid #dfe7df; border-left: 4px solid #2d6a2d;
+    background: #fcfefc; border-radius: 0 5px 5px 0;
+  }
+  .rec td { padding: 9px 12px; vertical-align: top; }
+  .rec .icon { width: 30px; vertical-align: top; padding-right: 0; }
+  .rec .title { font-size: 10.5pt; font-weight: 700; color: #1f5a1f; }
+  .rec .title .np { font-weight: 400; font-size: 8.6pt; color: #5a6a5a; }
+  .rec .value { font-weight: 700; color: #2d6a2d; }
+  .rec .body { font-size: 8.8pt; color: #41474e; margin-top: 3px; }
+  .rec .body .np { display: block; color: #6b7178; margin-top: 2px; }
+  .rec .conf {
+    float: right; font-size: 7.8pt; font-weight: 700;
+    background: #e7f0ff; color: #1e3a8a; padding: 2px 8px; border-radius: 9px;
+  }
+  .rec.fert { border-left-color: #1e6fb8; }
+  .rec.fert .title, .rec.fert .value { color: #1e6fb8; }
+  .rec.soil { border-left-color: #8a6d12; }
+  .rec.soil .title, .rec.soil .value { color: #8a6d12; }
+  .rec.irrig { border-left-color: #1488a6; }
+  .rec.irrig .title, .rec.irrig .value { color: #1488a6; }
 
-    /* ── Clearfix ── */
-    .clearfix::after { content: ""; display: table; clear: both; }
-  </style>
+  .chip {
+    display: inline-block; padding: 1px 8px; border-radius: 9px;
+    font-size: 8pt; font-weight: 700;
+  }
+  .chip.green  { background: #d8f3dc; color: #1b5e2a; }
+  .chip.yellow { background: #fdecc8; color: #8a6d12; }
+  .chip.red    { background: #fde0e0; color: #8a1c1c; }
+
+  /* ════════════════ Advice ════════════════ */
+  .advice {
+    background: #fffdf5; border: 1px solid #ecd9a3; border-left: 4px solid #d4a017;
+    border-radius: 0 5px 5px 0; padding: 9px 12px; margin-bottom: 9px;
+  }
+  .advice .h { font-size: 9.4pt; font-weight: 700; color: #8a6d12; margin-bottom: 4px; }
+  .advice .h .np { font-weight: 400; font-size: 8.4pt; color: #a08530; }
+  .advice .h .src {
+    float: right; font-size: 7pt; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.4px; background: #efe4c2; color: #8a6d12; padding: 1px 7px; border-radius: 8px;
+  }
+  .advice .en { font-size: 8.8pt; color: #2b3138; white-space: pre-line; }
+  .advice .np { font-size: 8.8pt; color: #41474e; white-space: pre-line;
+                border-top: 1px dashed #ecd9a3; margin-top: 6px; padding-top: 6px; }
+
+  .keep { page-break-inside: avoid; }
+
+  /* ════════════════ Disclaimer ════════════════ */
+  .disclaimer {
+    font-size: 7.6pt; color: #9aa0a6; text-align: center;
+    border-top: 1px solid #ececec; margin-top: 16px; padding-top: 7px;
+  }
+</style>
 </head>
 <body>
 
-<!-- ── HEADER (repeated on all pages) ── -->
-<div id="header_content">
-  <span class="header-logo">🌱 SmartAgri</span>
-  <span class="header-subtitle">Smart Agriculture Monitoring System &nbsp;|&nbsp; Far Western University</span>
+<!-- ════════════ Running header ════════════ -->
+<div class="page-header">
+  <table>
+    <tr>
+      <td class="brand">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+          <path d="M12 21c0-6 0-9 6-13-1 6-3 9-6 11" stroke="#2d6a2d" stroke-width="2" stroke-linecap="round" fill="#4a9e4a"/>
+          <path d="M12 21c0-5-1-8-6-11 1 5 3 8 6 9" stroke="#2d6a2d" stroke-width="2" stroke-linecap="round" fill="#6cbf6c"/>
+        </svg>
+        SmartAgri
+      </td>
+      <td class="tagline">Smart Agriculture Monitoring System&nbsp;&nbsp;|&nbsp;&nbsp;Far Western University</td>
+    </tr>
+  </table>
 </div>
 
-<!-- ── FOOTER (repeated on all pages) ── -->
-<div id="footer_content">
-  <span class="footer-left">Report ID: {{ report_id }} &nbsp;|&nbsp; Generated: {{ generated_at }}</span>
-  <span class="footer-right">SmartAgri © 2025 &nbsp;|&nbsp; Confidential Farm Report</span>
-</div>
-
-<!-- ══════════════════════════════════════════════════════════ -->
-<!-- COVER BANNER                                               -->
-<!-- ══════════════════════════════════════════════════════════ -->
-<div class="cover-banner">
+<!-- ════════════ Cover banner ════════════ -->
+<div class="cover">
   <h1>SmartAgri Farm Advisory Report</h1>
   <div class="sub">AI-Powered Precision Agriculture &nbsp;·&nbsp; Nepal</div>
+  <div class="sub-np np">एआई-संचालित कृषि सल्लाह प्रतिवेदन</div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════ -->
-<!-- FARMER DETAILS                                             -->
-<!-- ══════════════════════════════════════════════════════════ -->
-<div class="section-header">
-  Farmer Information &nbsp;
-  <span class="section-header-np">किसान विवरण</span>
+<!-- ════════════ Quick summary ════════════ -->
+{% if summary.en or summary.np %}
+<div class="summary keep">
+  <div class="lead">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="10" fill="#2d6a2d"/>
+      <path d="M8 12.5l2.5 2.5L16 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    At a Glance <span class="np" style="font-weight:400;font-size:8.6pt;color:#4a7a4a;margin-left:8px;">संक्षिप्त सारांश</span>
+  </div>
+  {% if show_en and summary.en %}<p class="en">{{ summary.en | safe }}</p>{% endif %}
+  {% if show_np and summary.np %}<p class="np np-block np">{{ summary.np | safe }}</p>{% endif %}
 </div>
+{% endif %}
 
-<table class="info-table">
+<!-- ════════════ Farmer information ════════════ -->
+<div class="section">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="8" r="4" fill="#2d6a2d"/>
+    <path d="M4 20c0-4 4-6 8-6s8 2 8 6" fill="#4a9e4a"/>
+  </svg>
+  <span class="t-en">Farmer Information</span><span class="t-np np">किसान विवरण</span>
+</div>
+<table class="info">
   <tr>
-    <td>Farmer Name</td>
-    <td>{{ farmer_name or "—" }}</td>
-    <td>Report ID</td>
-    <td><strong>{{ report_id }}</strong></td>
+    <td class="k">Farmer Name</td><td>{{ farmer_name or "—" }}</td>
+    <td class="k">Report ID</td><td><strong>{{ report_id }}</strong></td>
   </tr>
   <tr>
-    <td>Device ID</td>
-    <td>{{ device_id or "—" }}</td>
-    <td>Date Generated</td>
-    <td>{{ generated_at }}</td>
+    <td class="k">Device ID</td><td>{{ device_id or "—" }}</td>
+    <td class="k">Date Generated</td><td>{{ generated_at }}</td>
   </tr>
   {% if district or region %}
   <tr>
-    <td>District / Region</td>
-    <td>{{ district or "—" }}</td>
-    <td>Agro-Zone</td>
-    <td>{{ region or "—" }}</td>
+    <td class="k">District</td><td>{{ district or "—" }}</td>
+    <td class="k">Agro-Zone</td><td>{{ region or "—" }}</td>
   </tr>
   {% endif %}
 </table>
 
-<!-- ══════════════════════════════════════════════════════════ -->
-<!-- SENSOR INPUT DATA                                          -->
-<!-- ══════════════════════════════════════════════════════════ -->
-{% if input_data %}
-<div class="section-header">
-  Sensor Readings Used &nbsp;
-  <span class="section-header-np">प्रयोग गरिएका सेन्सर डेटा</span>
+<!-- ════════════ Soil & climate readings (blood-report style) ════════════ -->
+<div class="section">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+    <rect x="3" y="4" width="18" height="4" rx="1" fill="#4a9e4a"/>
+    <rect x="3" y="10" width="18" height="4" rx="1" fill="#8a6d12"/>
+    <rect x="3" y="16" width="18" height="4" rx="1" fill="#6b4f0f"/>
+  </svg>
+  <span class="t-en">Soil &amp; Climate Readings</span><span class="t-np np">माटो र मौसम मापन</span>
 </div>
-
-<table class="soil-table">
+<table class="readings">
   <tr>
-    <th>N (mg/kg)</th>
-    <th>P (mg/kg)</th>
-    <th>K (mg/kg)</th>
-    <th>Temp (°C)</th>
-    <th>Humidity (%)</th>
-    <th>pH</th>
-    <th>Moisture (%)</th>
-    <th>Rainfall (mm)</th>
+    <th>Reading / मापन</th>
+    <th>Your&nbsp;Value</th>
+    <th>Healthy&nbsp;Range</th>
+    <th>Status</th>
+    <th>What it means / अर्थ</th>
   </tr>
-  <tr>
-    <td>{{ input_data.get('nitrogen', input_data.get('N', '—')) }}</td>
-    <td>{{ input_data.get('phosphorus', input_data.get('P', '—')) }}</td>
-    <td>{{ input_data.get('potassium', input_data.get('K', '—')) }}</td>
-    <td>{{ input_data.get('temperature', '—') }}</td>
-    <td>{{ input_data.get('humidity', '—') }}</td>
-    <td>{{ input_data.get('ph', input_data.get('pH', '—')) }}</td>
-    <td>{{ input_data.get('moisture', input_data.get('soil_moisture', '—')) }}</td>
-    <td>{{ input_data.get('rainfall', input_data.get('rainfall_mm', '—')) }}</td>
+  {% for r in readings %}
+  <tr class="keep">
+    <td class="param">{{ r.label_en }}<span class="sub np">{{ r.label_np }}</span></td>
+    <td class="val">{{ r.value }}{% if r.value != "—" and r.unit %}&nbsp;{{ r.unit }}{% endif %}</td>
+    <td class="range">{{ r.range_text }}</td>
+    <td style="text-align:center;"><span class="pill {{ r.status }}">{{ r.status_en }}{% if show_np %} / {{ r.status_np }}{% endif %}</span></td>
+    <td class="msg">
+      {% if show_en %}{{ r.msg_en }}{% endif %}
+      {% if show_np and r.msg_np != "—" %}<span class="np">{{ r.msg_np }}</span>{% endif %}
+    </td>
   </tr>
+  {% endfor %}
 </table>
-{% endif %}
 
-<!-- ══════════════════════════════════════════════════════════ -->
-<!-- ML RECOMMENDATIONS                                         -->
-<!-- ══════════════════════════════════════════════════════════ -->
-<div class="section-header">
-  ML Recommendations &nbsp;
-  <span class="section-header-np">एआई सिफारिसहरू</span>
+<!-- ════════════ ML recommendations ════════════ -->
+<div class="section">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="12" r="9" fill="#2d6a2d"/>
+    <path d="M12 7v5l3 3" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+  </svg>
+  <span class="t-en">AI Recommendations</span><span class="t-np np">एआई सिफारिसहरू</span>
 </div>
 
-{% if crop %}
-<div class="rec-card">
-  <div class="clearfix">
-    <span class="rec-title">🌾 Recommended Crop: {{ crop }}</span>
-    {% if crop_confidence %}
-    <span class="rec-conf badge badge-green">{{ "%.1f"|format(crop_confidence * 100) }}% confident</span>
-    {% endif %}
-  </div>
-  <div class="rec-body">
-    Suitability: Your soil and climate conditions are best matched for <strong>{{ crop }}</strong> cultivation.
-  </div>
-</div>
-{% endif %}
-
-{% if fertilizer %}
-<div class="rec-card">
-  <div class="clearfix">
-    <span class="rec-title">🧪 Recommended Fertilizer: {{ fertilizer }}</span>
-    {% if fertilizer_confidence %}
-    <span class="rec-conf badge badge-blue">{{ "%.1f"|format(fertilizer_confidence * 100) }}% confident</span>
-    {% endif %}
-  </div>
-  <div class="rec-body">
-    Nepal-available fertilizer best suited for current soil nutrient levels.
-  </div>
-</div>
-{% endif %}
-
-{% if soil_class %}
-<div class="rec-card">
-  <div class="clearfix">
-    <span class="rec-title">🌱 Soil Fertility:
-      {% if soil_class == 'High' %}
-        <span class="badge badge-green">{{ soil_class }}</span>
-      {% elif soil_class == 'Medium' %}
-        <span class="badge badge-yellow">{{ soil_class }}</span>
-      {% else %}
-        <span class="badge badge-red">{{ soil_class }}</span>
-      {% endif %}
-    </span>
-  </div>
-  <div class="rec-body">
-    TabNet soil fertility analysis based on N, P, K, pH, and moisture levels.
-  </div>
-</div>
-{% endif %}
-
-{% if irrigation %}
-<div class="rec-card">
-  <div class="clearfix">
-    <span class="rec-title">💧 Irrigation: {{ irrigation }}</span>
-  </div>
-</div>
-{% endif %}
-
-<!-- ══════════════════════════════════════════════════════════ -->
-<!-- DETAILED ADVICE                                            -->
-<!-- ══════════════════════════════════════════════════════════ -->
-{% if advice_en or advice_np %}
-<div class="advice-box">
-  <div class="advice-title">
-    📋 Detailed Farming Advice &nbsp;|&nbsp; <span style="font-size:9pt;">विस्तृत खेती सल्लाह</span>
-  </div>
-  {% if advice_en %}
-  <div class="advice-en">
-    <strong>English:</strong><br/>{{ advice_en }}
-  </div>
+<table class="recs">
+  {% if crop %}
+  <tr class="rec keep">
+    <td class="icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <path d="M12 22V8" stroke="#2d6a2d" stroke-width="2" stroke-linecap="round"/>
+        <path d="M12 11c0-3 2-5 5-5 0 3-2 5-5 5z" fill="#6cbf6c"/>
+        <path d="M12 14c0-3-2-5-5-5 0 3 2 5 5 5z" fill="#4a9e4a"/>
+        <path d="M9 22h6" stroke="#8a6d12" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </td>
+    <td>
+      {% if crop_confidence_pct %}<span class="conf">{{ crop_confidence_pct }} confident</span>{% endif %}
+      <div class="title">Recommended Crop: <span class="value">{{ crop }}</span> <span class="np">सिफारिस गरिएको बाली</span></div>
+      <div class="body">
+        {% if show_en %}Your soil and climate conditions are best matched for growing <b>{{ crop }}</b> this season.{% endif %}
+        {% if show_np %}<span class="np">यस मौसममा <b>{{ crop }}</b> लगाउन तपाईंको माटो र हावापानी सबैभन्दा उपयुक्त छ।</span>{% endif %}
+        {% if crop_top_3 %}
+        <div style="margin-top:4px;font-size:8pt;color:#6b7178;">
+          Other good options:
+          {% for t in crop_top_3[1:3] %}<b>{{ t.label }}</b>{% if not loop.last %}, {% endif %}{% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </td>
+  </tr>
   {% endif %}
-  {% if advice_np %}
-  <div class="advice-np">
-    <strong>नेपाली:</strong><br/>{{ advice_np }}
-  </div>
+
+  {% if fertilizer %}
+  <tr class="rec fert keep">
+    <td class="icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <path d="M9 3h6v4l3 12a2 2 0 01-2 2H8a2 2 0 01-2-2L9 7V3z" fill="#1e6fb8"/>
+        <path d="M9 3h6v3H9z" fill="#155a96"/>
+        <circle cx="11" cy="15" r="1" fill="#fff"/><circle cx="14" cy="17" r="1" fill="#fff"/>
+      </svg>
+    </td>
+    <td>
+      {% if fertilizer_confidence_pct %}<span class="conf">{{ fertilizer_confidence_pct }} confident</span>{% endif %}
+      <div class="title">Recommended Fertilizer: <span class="value">{{ fertilizer }}</span> <span class="np">सिफारिस गरिएको मल</span></div>
+      <div class="body">
+        {% if show_en %}<b>{{ fertilizer }}</b> is the Nepal-available fertilizer best suited to your current soil nutrient levels.{% endif %}
+        {% if show_np %}<span class="np">तपाईंको माटोको पोषक तत्व अनुसार नेपालमा पाइने उपयुक्त मल <b>{{ fertilizer }}</b> हो।</span>{% endif %}
+        {% if npk_status %}
+        <div style="margin-top:4px;font-size:8pt;color:#6b7178;">
+          Nutrient status:
+          {% for k, v in npk_status.items() %}<b>{{ k }}</b>: {{ v }}{% if not loop.last %} · {% endif %}{% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </td>
+  </tr>
   {% endif %}
+
+  {% if soil_class %}
+  <tr class="rec soil keep">
+    <td class="icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <path d="M3 9c3-2 6-2 9 0s6 2 9 0v9c-3 2-6 2-9 0s-6-2-9 0V9z" fill="#8a6d12"/>
+        <path d="M3 9c3-2 6-2 9 0s6 2 9 0" stroke="#6b4f0f" stroke-width="1.5" fill="none"/>
+        <circle cx="8" cy="13" r="1" fill="#d4a017"/><circle cx="15" cy="14" r="1" fill="#d4a017"/>
+      </svg>
+    </td>
+    <td>
+      {% if soil_confidence_pct %}<span class="conf">{{ soil_confidence_pct }} confident</span>{% endif %}
+      <div class="title">Soil Fertility:
+        {% if soil_class|lower == 'high' %}<span class="chip green">{{ soil_class }}</span>
+        {% elif soil_class|lower == 'medium' %}<span class="chip yellow">{{ soil_class }}</span>
+        {% else %}<span class="chip red">{{ soil_class }}</span>{% endif %}
+        <span class="np">माटोको उर्वरता</span>
+      </div>
+      <div class="body">
+        {% if show_en %}TabNet AI analysis of your N, P, K, pH and moisture rates your soil as <b>{{ soil_class }}</b> fertility.{% endif %}
+        {% if show_np %}<span class="np">N, P, K, pH र चिस्यानको विश्लेषणले तपाईंको माटोको उर्वरता <b>{{ soil_class }}</b> देखाएको छ।</span>{% endif %}
+      </div>
+    </td>
+  </tr>
+  {% endif %}
+
+  {% if irrigation %}
+  <tr class="rec irrig keep">
+    <td class="icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <path d="M12 3c4 5 6 8 6 11a6 6 0 01-12 0c0-3 2-6 6-11z" fill="#1488a6"/>
+        <path d="M9 14a3 3 0 003 3" stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+      </svg>
+    </td>
+    <td>
+      <div class="title">Irrigation: <span class="value">{{ irrigation }}</span> <span class="np">सिँचाइ</span></div>
+      <div class="body">
+        {% if show_en %}{% if water_amount_mm %}Apply about <b>{{ water_amount_mm }} mm</b> of water. {% endif %}{% if irrigation_urgency %}Urgency: <b>{{ irrigation_urgency }}</b>.{% endif %}{% endif %}
+        {% if show_np %}<span class="np">{% if water_amount_mm %}लगभग <b>{{ water_amount_mm }} मिमि</b> पानी दिनुहोस्। {% endif %}{% if irrigation_urgency %}प्राथमिकता: <b>{{ irrigation_urgency }}</b>।{% endif %}</span>{% endif %}
+      </div>
+    </td>
+  </tr>
+  {% endif %}
+</table>
+
+<!-- ════════════ Detailed advice (XAI / Gemini) ════════════ -->
+{% if advice_sections %}
+<div class="section">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+    <rect x="5" y="3" width="14" height="18" rx="2" fill="#d4a017"/>
+    <path d="M8 8h8M8 12h8M8 16h5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+  </svg>
+  <span class="t-en">Detailed Farming Advice</span><span class="t-np np">विस्तृत खेती सल्लाह</span>
 </div>
+
+{% for sec in advice_sections %}
+<div class="advice keep">
+  <div class="h">
+    {% if sec.source == 'gemini' %}<span class="src">AI</span>{% endif %}
+    {{ sec.title_en }} <span class="np">{{ sec.title_np }}</span>
+  </div>
+  {% if show_en and sec.advice_en %}<div class="en">{{ sec.advice_en }}</div>{% endif %}
+  {% if show_np and sec.advice_np %}<div class="np">{{ sec.advice_np }}</div>{% endif %}
+</div>
+{% endfor %}
 {% endif %}
 
-<!-- ══════════════════════════════════════════════════════════ -->
-<!-- DISCLAIMER                                                 -->
-<!-- ══════════════════════════════════════════════════════════ -->
+<!-- ════════════ Disclaimer ════════════ -->
 <div class="disclaimer">
-  This report is generated by the SmartAgri AI system and is intended for advisory purposes only.
-  Always consult your local Krishi Karyalaya (Agriculture Office) before making major farming decisions.
-  &nbsp;·&nbsp;
+  This report is generated by the SmartAgri AI system for advisory purposes only.
+  Reference ranges are general guidance — always consult your local Krishi Karyalaya
+  (Agriculture Office) before making major farming decisions.<br/>
+  <span class="np">यो प्रतिवेदन सल्लाहका लागि मात्र हो। ठूला निर्णय गर्नुअघि स्थानीय कृषि कार्यालयमा सम्पर्क गर्नुहोस्।</span><br/>
   SmartAgri — Bachelor of Computer Engineering, Far Western University, Mahendranagar, Nepal (2025)
 </div>
 

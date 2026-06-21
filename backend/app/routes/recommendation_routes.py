@@ -827,12 +827,22 @@ class ReportRequest(_BaseModel):
     device_id:   Optional[str] = None
     district:    Optional[str] = None
     region:      Optional[str] = None
-    crop:        Optional[str] = None
-    fertilizer:  Optional[str] = None
-    soil_class:  Optional[str] = None
-    irrigation:  Optional[str] = None
-    advice_en:   Optional[str] = None
-    advice_np:   Optional[str] = None
+    # ── ML predictions ──
+    crop:                  Optional[str]   = None
+    crop_confidence:       Optional[float] = None
+    crop_top_3:            Optional[list]  = None
+    fertilizer:            Optional[str]   = None
+    fertilizer_confidence: Optional[float] = None
+    npk_status:            Optional[dict]  = None
+    soil_class:            Optional[str]   = None
+    soil_confidence:       Optional[float] = None
+    irrigation:            Optional[str]   = None
+    irrigation_urgency:    Optional[str]   = None
+    water_amount_mm:       Optional[float] = None
+    # ── Advice: full 4-section bundle OR legacy single pair ──
+    advice:      Optional[dict] = None
+    advice_en:   Optional[str]  = None
+    advice_np:   Optional[str]  = None
     input_data:  Optional[dict] = None
     language:    _Literal["en", "np", "both"] = "both"
 
