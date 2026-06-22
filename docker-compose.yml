@@ -23,6 +23,7 @@ services:
       - -c
       - >-
         if [ -n "$$MQTT_USERNAME" ]; then
+        rm -f /mosquitto/config/passwd;
         mosquitto_passwd -b -c /mosquitto/config/passwd "$$MQTT_USERNAME" "$$MQTT_PASSWORD" &&
         chmod 0700 /mosquitto/config/passwd &&
         chown mosquitto:mosquitto /mosquitto/config/passwd;
