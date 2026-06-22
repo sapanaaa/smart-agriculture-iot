@@ -11,6 +11,7 @@ import {
   fmt,
   hhmm,
   clamp,
+  parseUTC,
 } from "../_components/DashboardComponents";
 import { usePolling } from "@/app/hooks/useApi";
 import { getLatestReading, getSensorHistory } from "@/app/services/api";
@@ -44,7 +45,7 @@ export default function SensorsLivePage() {
   const { data: hist } = usePolling(
     useCallback(() => getSensorHistory(60), []), 
     15000
-  ) as { data: { readings: SensorReading[] } | null; error: any; loading: boolean };
+  ) as { data: { readings: SensorReading[]; total?: number } | null; error: any; loading: boolean };
 
   const readings = (hist?.readings || []).slice().reverse();
 
@@ -124,7 +125,7 @@ export default function SensorsLivePage() {
             <div style={{ width: "1px", background: T.border }} />
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: "20px", fontWeight: "600", color: T.text }}>
-                {hist?.readings ? (hist.readings as SensorReading[]).length : 0}
+                {hist?.total ?? (hist?.readings?.length ?? 0)}
               </div>
               <div style={{ fontSize: "11px", color: T.textMuted }}>Readings</div>
             </div>
@@ -490,8 +491,8 @@ export default function SensorsLivePage() {
         <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
           <span style={{ color: T.accent }}>🟢</span> System Online
         </div>
-        <div>📊 {readings.length} readings in database</div>
-        <div>⏱️ Last update: {sensor?.received_at ? new Date(sensor.received_at).toLocaleTimeString() : '—'}</div>
+        <div>📊 {hist?.total ?? readings.length} readings in database</div>
+        <div>⏱️ Last update: {parseUTC(sensor?.received_at)?.toLocaleTimeString() ?? '—'}</div>
       </div>
 
       {/* Responsive Styles */}

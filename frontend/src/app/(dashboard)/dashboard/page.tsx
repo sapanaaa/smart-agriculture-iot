@@ -95,7 +95,7 @@ export default function OverviewPage() {
     useCallback(() => getSensorHistory(45), []),
     15000,
   ) as {
-    data: { readings: SensorReading[] } | null;
+    data: { readings: SensorReading[]; total?: number } | null;
     error: any;
     loading: boolean;
   };
@@ -282,7 +282,7 @@ export default function OverviewPage() {
               Total Readings
             </div>
             <div style={{ fontSize: "24px", fontWeight: "600", color: T.text }}>
-              {hist?.readings?.length || 0}
+              {hist?.total ?? hist?.readings?.length ?? 0}
             </div>
           </div>
           <div
@@ -684,7 +684,7 @@ export default function OverviewPage() {
                   <span style={{ color: T.textMuted }}>Min Temp: </span>
                   <span style={{ color: T.rose, fontWeight: "500" }}>
                     {fmt(
-                      Math.min(...series.map((d) => d.temp).filter(Boolean)),
+                      Math.min(...series.map((d) => d.temp).filter((v): v is number => v != null)),
                       1,
                     )}
                     °C
@@ -694,7 +694,7 @@ export default function OverviewPage() {
                   <span style={{ color: T.textMuted }}>Max Temp: </span>
                   <span style={{ color: T.rose, fontWeight: "500" }}>
                     {fmt(
-                      Math.max(...series.map((d) => d.temp).filter(Boolean)),
+                      Math.max(...series.map((d) => d.temp).filter((v): v is number => v != null)),
                       1,
                     )}
                     °C

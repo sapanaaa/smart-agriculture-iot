@@ -51,17 +51,31 @@ export const fmt = (v: number | null | undefined, d = 1) =>
 export const clamp = (v: number, lo: number, hi: number) => 
   Math.min(hi, Math.max(lo, v ?? lo));
 
+// The backend emits naive-UTC timestamps (e.g. "2026-06-22T04:28:19") with no
+// 'Z'/offset. The browser would otherwise parse those as LOCAL time, making a
+// fresh reading look hours off (by the viewer's UTC offset). parseUTC() treats
+// such strings as UTC so relative times and clock labels are always correct.
+export const parseUTC = (iso: string | null | undefined): Date | null => {
+  if (!iso) return null;
+  const hasTz = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(iso);
+  const d = new Date(hasTz ? iso : `${iso}Z`);
+  return isNaN(d.getTime()) ? null : d;
+};
+
 export const ago = (iso: string | null | undefined) => {
-  if (!iso) return "—";
-  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  const d = parseUTC(iso);
+  if (!d) return "—";
+  const s = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (s < 5) return "just now";
   if (s < 60) return `${s}s ago`;
   if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-  return `${Math.floor(s / 3600)}h ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  return `${Math.floor(s / 86400)}d ago`;
 };
 
 export const hhmm = (iso: string | null | undefined) => {
-  if (!iso) return "";
-  const d = new Date(iso);
+  const d = parseUTC(iso);
+  if (!d) return "";
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 };
 
